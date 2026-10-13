@@ -1,0 +1,25 @@
+{
+  "name": "@agro/ui",
+  "private": true,
+  "version": "0.0.0",
+  "exports": {
+    "./button": "./src/button.tsx",
+    "./utils": "./src/utils.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@agro/typescript-config": "workspace:*"
+  }
+}
