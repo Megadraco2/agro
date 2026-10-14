@@ -64,6 +64,36 @@ describe('Admin de sistema', () => {
       .expect(401);
   });
 
+  it('rejects listing organizations without a valid admin session', async () => {
+    await request(app.getHttpServer()).get('/admin/organizacoes').expect(401);
+  });
+
+  it('rejects reusing a session cookie after logout (revoked session)', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/admin/auth/login')
+      .send({
+        email: process.env.ADMIN_BOOTSTRAP_EMAIL,
+        senha: process.env.ADMIN_BOOTSTRAP_PASSWORD,
+      })
+      .expect(200);
+    const cookie = login.headers['set-cookie']![0] as string;
+
+    await request(app.getHttpServer())
+      .get('/admin/organizacoes')
+      .set('Cookie', cookie)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post('/admin/auth/logout')
+      .set('Cookie', cookie)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get('/admin/organizacoes')
+      .set('Cookie', cookie)
+      .expect(401);
+  });
+
   it('creates an organization with its first ORG_ADMIN user, then lists it', async () => {
     const login = await request(app.getHttpServer())
       .post('/admin/auth/login')
