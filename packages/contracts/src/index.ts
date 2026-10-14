@@ -12,3 +12,4 @@ export * from './planejamento';
 export * from './execucao';
 export * from './compra-insumo';
 export * from './organizacao-admin';
+export * from './usuario';

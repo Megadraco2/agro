@@ -1,0 +1,41 @@
+import { Body, Controller, HttpCode, Post, Req, Res } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import type { Request, Response } from 'express';
+import { AuthService } from './auth.service';
+import { LoginDto } from './auth.dto';
+
+const NOME_COOKIE = 'agro_session';
+
+@ApiTags('auth')
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly service: AuthService) {}
+
+  @Post('login')
+  @HttpCode(200)
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const sessaoId = await this.service.login(dto);
+    response.cookie(NOME_COOKIE, sessaoId, {
+      httpOnly: true,
+      // ver nota equivalente em AdminAuthController — Secure só em produção.
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    return { status: 'ok' };
+  }
+
+  @Post('logout')
+  @HttpCode(204)
+  async logout(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const sessaoId = request.cookies?.[NOME_COOKIE] as string | undefined;
+    if (sessaoId) await this.service.logout(sessaoId);
+    response.clearCookie(NOME_COOKIE);
+  }
+}

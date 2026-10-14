@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AdminSistemaModule } from './admin-sistema/admin-sistema.module';
+import { AuthModule } from './auth/auth.module';
 import { ComprasInsumoModule } from './compras-insumo/compras-insumo.module';
 import { ExecucoesModule } from './execucoes/execucoes.module';
 import { HealthController } from './health.controller';
@@ -10,6 +11,7 @@ import { ProcedimentosModule } from './procedimentos/procedimentos.module';
 import { PropriedadesModule } from './propriedades/propriedades.module';
 import { SafrasModule } from './safras/safras.module';
 import { TalhoesModule } from './talhoes/talhoes.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { TalhoesModule } from './talhoes/talhoes.module';
     ExecucoesModule,
     ComprasInsumoModule,
     AdminSistemaModule,
+    AuthModule,
+    UsuariosModule,
   ],
   controllers: [HealthController],
 })
