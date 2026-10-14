@@ -46,9 +46,20 @@ três casos. Os três foram implementados:
   existência de FK dentro de `create()` em Planejamento/Execução/CompraInsumo, não só os `getOrThrow` simples.
   Caso especial: `Talhão` não tem coluna `organizacaoId` própria, então o filtro é via relação
   (`findFirst({ where: { id, propriedade: { organizacaoId } } })`). `apps/api/test/isolamento-organizacoes.test.ts`
-  prova o isolamento nas 8 entidades, incluindo esse caso especial de Talhão, com 5 testes que criam dados
-  numa organização e confirmam 404 ao tentar ler/atualizar/referenciar esses dados autenticado como outra
-  organização.
+  tem 10 testes cobrindo as 8 entidades, cada um criando dados numa organização e tentando
+  ler/atualizar/referenciar/listar esses dados autenticado como outra:
+  - Propriedade (GET por id → 404), Safra (PATCH por id → 404), Talhão (GET por id → 404, o caso especial
+    via relação), Insumo (PATCH por id → 404, e o preço da Org A continua intacto);
+  - Planejamento: criar referenciando Talhão/Procedimento/Insumo de outra organização → 404;
+  - CompraInsumo: criar referenciando só a Safra de outra organização → 404;
+  - Procedimento (sem rota por id): criar Planejamento referenciando só o Procedimento de outra organização
+    → 404, e `GET /procedimentos` não lista os da outra organização;
+  - Execução (sem rota por id — só `GET /execucoes` e `POST /execucoes`): criar referenciando só o
+    Planejamento de outra organização → 404, e `GET /execucoes` filtrando pelos ids de Safra/Talhão da outra
+    organização volta vazio.
+
+  Além disso, `apps/api/test/sem-sessao.test.ts` confirma que as rotas de listagem e criação das 8 entidades
+  (16 rotas) respondem 401 a uma requisição sem header `Cookie`.
 
 ## 4. Sem limite máximo em campos numéricos
 
