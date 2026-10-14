@@ -86,10 +86,14 @@ export class PlanejamentosService {
     const organizacaoId = await this.currentOrg.getId();
 
     const [safra, talhao, procedimento] = await Promise.all([
-      this.prisma.safra.findUnique({ where: { id: dto.safraId } }),
-      this.prisma.talhao.findUnique({ where: { id: dto.talhaoId } }),
-      this.prisma.procedimento.findUnique({
-        where: { id: dto.procedimentoId },
+      this.prisma.safra.findFirst({
+        where: { id: dto.safraId, organizacaoId },
+      }),
+      this.prisma.talhao.findFirst({
+        where: { id: dto.talhaoId, propriedade: { organizacaoId } },
+      }),
+      this.prisma.procedimento.findFirst({
+        where: { id: dto.procedimentoId, organizacaoId },
       }),
     ]);
     if (!safra) throw new NotFoundException('Safra não encontrada');
@@ -104,7 +108,7 @@ export class PlanejamentosService {
 
     const insumoIds = dto.insumos.map((i) => i.insumoId);
     const insumos = await this.prisma.insumo.findMany({
-      where: { id: { in: insumoIds } },
+      where: { id: { in: insumoIds }, organizacaoId },
     });
     if (insumos.length !== insumoIds.length) {
       throw new NotFoundException('Um ou mais insumos não foram encontrados');
@@ -146,8 +150,9 @@ export class PlanejamentosService {
   }
 
   async getOrThrow(id: string): Promise<PlanejamentoRow> {
-    const item = await this.prisma.planejamentoItem.findUnique({
-      where: { id },
+    const organizacaoId = await this.currentOrg.getId();
+    const item = await this.prisma.planejamentoItem.findFirst({
+      where: { id, organizacaoId },
       include: PLANEJAMENTO_INCLUDE,
     });
     if (!item) throw new NotFoundException('Planejamento não encontrado');

@@ -29,26 +29,26 @@ sobrescreve env vars já setadas pelo processo (verificado simulando exatamente 
 
 ## 3. Testes que o spec pedia e nunca foram escritos
 
-**Status:** 🟡 Parcialmente resolvido (14/10/2026) — 2 de 3
+**Status:** ✅ Resolvido (14/10/2026)
 
 A spec original (docs/superpowers/specs/2026-10-13-gestao-agricola-dominio-design.md, seção "Testes") listava
-três casos. Dois foram implementados:
+três casos. Os três foram implementados:
 
 - ✅ Mudar o preço de um Insumo não altera `custoEstimado`/`custoTotal`/snapshots já gravados — teste de
   regressão adicionado em `planejamentos.test.ts`, `execucoes.test.ts` e `compras-insumo.test.ts` (cria,
   muda o preço via PATCH, reconsulta, confirma que nada mudou).
 - ✅ Cada contrato Zod (`@agro/contracts`) aceita payload válido e rejeita payload inválido/campo extra —
   25 testes novos em `packages/contracts/schemas.test.ts`, um bloco por recurso.
-
-O terceiro **não é testável ainda**, e por isso continua fora:
-
-- ⛔ Execução não pode referenciar Talhão de Propriedade de outra Organização — hoje **nenhuma** das 8
-  entidades filtra busca por `organizacaoId` (achado sistêmico repetido em quase toda revisão de task:
-  Propriedade, Talhão, Safra, Procedimento, Insumo, Planejamento, Execução, CompraInsumo todas buscam só por
-  `id`). Com uma única organização no sistema inteiro, não existe uma segunda organização de onde vazar
-  dado — escrever esse teste hoje só provaria que a funcionalidade não existe. Isso é trabalho de
-  autorização (helper de busca escopada por organização), explicitamente depende do design de autenticação
-  (docs/AUTH.md), não é um teste isolado que falta escrever.
+- ✅ Execução não pode referenciar Talhão de Propriedade de outra Organização — agora existe uma segunda
+  organização de verdade (provisionada via `POST /admin/organizacoes`, o fluxo real de admin do sistema), e
+  todo lookup por `id` nas 8 entidades do domínio agrícola (Propriedade, Talhão, Safra, Procedimento, Insumo,
+  Planejamento, Execução, CompraInsumo) passou a filtrar por `organizacaoId` — inclusive as checagens de
+  existência de FK dentro de `create()` em Planejamento/Execução/CompraInsumo, não só os `getOrThrow` simples.
+  Caso especial: `Talhão` não tem coluna `organizacaoId` própria, então o filtro é via relação
+  (`findFirst({ where: { id, propriedade: { organizacaoId } } })`). `apps/api/test/isolamento-organizacoes.test.ts`
+  prova o isolamento nas 8 entidades, incluindo esse caso especial de Talhão, com 5 testes que criam dados
+  numa organização e confirmam 404 ao tentar ler/atualizar/referenciar esses dados autenticado como outra
+  organização.
 
 ## 4. Sem limite máximo em campos numéricos
 

@@ -53,7 +53,10 @@ export class InsumosService {
   }
 
   async getOrThrow(id: string): Promise<InsumoRow> {
-    const insumo = await this.prisma.insumo.findUnique({ where: { id } });
+    const organizacaoId = await this.currentOrg.getId();
+    const insumo = await this.prisma.insumo.findFirst({
+      where: { id, organizacaoId },
+    });
     if (!insumo) throw new NotFoundException('Insumo não encontrado');
     return insumo;
   }

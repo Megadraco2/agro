@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { TalhaoResponse } from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
+import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateTalhaoDto, UpdateTalhaoDto } from './talhoes.dto';
 
@@ -14,7 +15,10 @@ type TalhaoRow = {
 
 @Injectable()
 export class TalhoesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly currentOrg: CurrentOrganizationService,
+  ) {}
 
   private toResponse(talhao: TalhaoRow): TalhaoResponse {
     return {
@@ -27,8 +31,9 @@ export class TalhoesService {
   }
 
   private async getPropriedadeOrThrow(propriedadeId: string) {
-    const propriedade = await this.prisma.propriedade.findUnique({
-      where: { id: propriedadeId },
+    const organizacaoId = await this.currentOrg.getId();
+    const propriedade = await this.prisma.propriedade.findFirst({
+      where: { id: propriedadeId, organizacaoId },
     });
     if (!propriedade) throw new NotFoundException('Propriedade não encontrada');
     return propriedade;
@@ -59,7 +64,10 @@ export class TalhoesService {
   }
 
   async getOrThrow(id: string): Promise<TalhaoRow> {
-    const talhao = await this.prisma.talhao.findUnique({ where: { id } });
+    const organizacaoId = await this.currentOrg.getId();
+    const talhao = await this.prisma.talhao.findFirst({
+      where: { id, propriedade: { organizacaoId } },
+    });
     if (!talhao) throw new NotFoundException('Talhão não encontrado');
     return talhao;
   }

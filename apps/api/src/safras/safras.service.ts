@@ -59,7 +59,10 @@ export class SafrasService {
   }
 
   async getOrThrow(id: string): Promise<SafraRow> {
-    const safra = await this.prisma.safra.findUnique({ where: { id } });
+    const organizacaoId = await this.currentOrg.getId();
+    const safra = await this.prisma.safra.findFirst({
+      where: { id, organizacaoId },
+    });
     if (!safra) throw new NotFoundException('Safra não encontrada');
     return safra;
   }

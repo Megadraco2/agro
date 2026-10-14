@@ -61,9 +61,15 @@ export class ComprasInsumoService {
     const organizacaoId = await this.currentOrg.getId();
 
     const [talhao, safra, insumo] = await Promise.all([
-      this.prisma.talhao.findUnique({ where: { id: dto.talhaoId } }),
-      this.prisma.safra.findUnique({ where: { id: dto.safraId } }),
-      this.prisma.insumo.findUnique({ where: { id: dto.insumoId } }),
+      this.prisma.talhao.findFirst({
+        where: { id: dto.talhaoId, propriedade: { organizacaoId } },
+      }),
+      this.prisma.safra.findFirst({
+        where: { id: dto.safraId, organizacaoId },
+      }),
+      this.prisma.insumo.findFirst({
+        where: { id: dto.insumoId, organizacaoId },
+      }),
     ]);
     if (!talhao) throw new NotFoundException('Talhão não encontrado');
     if (!safra) throw new NotFoundException('Safra não encontrada');

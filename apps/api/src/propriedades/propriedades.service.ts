@@ -53,8 +53,9 @@ export class PropriedadesService {
   }
 
   async getOrThrow(id: string): Promise<PropriedadeRow> {
-    const propriedade = await this.prisma.propriedade.findUnique({
-      where: { id },
+    const organizacaoId = await this.currentOrg.getId();
+    const propriedade = await this.prisma.propriedade.findFirst({
+      where: { id, organizacaoId },
     });
     if (!propriedade) throw new NotFoundException('Propriedade não encontrada');
     return propriedade;

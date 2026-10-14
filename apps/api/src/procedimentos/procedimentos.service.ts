@@ -46,8 +46,9 @@ export class ProcedimentosService {
   }
 
   async getOrThrow(id: string): Promise<ProcedimentoRow> {
-    const procedimento = await this.prisma.procedimento.findUnique({
-      where: { id },
+    const organizacaoId = await this.currentOrg.getId();
+    const procedimento = await this.prisma.procedimento.findFirst({
+      where: { id, organizacaoId },
     });
     if (!procedimento)
       throw new NotFoundException('Procedimento não encontrado');

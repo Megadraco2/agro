@@ -84,10 +84,14 @@ export class ExecucoesService {
     const organizacaoId = await this.currentOrg.getId();
 
     const [safra, talhao, procedimento] = await Promise.all([
-      this.prisma.safra.findUnique({ where: { id: dto.safraId } }),
-      this.prisma.talhao.findUnique({ where: { id: dto.talhaoId } }),
-      this.prisma.procedimento.findUnique({
-        where: { id: dto.procedimentoId },
+      this.prisma.safra.findFirst({
+        where: { id: dto.safraId, organizacaoId },
+      }),
+      this.prisma.talhao.findFirst({
+        where: { id: dto.talhaoId, propriedade: { organizacaoId } },
+      }),
+      this.prisma.procedimento.findFirst({
+        where: { id: dto.procedimentoId, organizacaoId },
       }),
     ]);
     if (!safra) throw new NotFoundException('Safra não encontrada');
@@ -110,8 +114,8 @@ export class ExecucoesService {
     }
 
     if (dto.planejamentoItemId) {
-      const planejamentoItem = await this.prisma.planejamentoItem.findUnique({
-        where: { id: dto.planejamentoItemId },
+      const planejamentoItem = await this.prisma.planejamentoItem.findFirst({
+        where: { id: dto.planejamentoItemId, organizacaoId },
       });
       if (!planejamentoItem)
         throw new NotFoundException('Planejamento não encontrado');
@@ -128,7 +132,7 @@ export class ExecucoesService {
 
     const insumoIds = dto.insumos.map((i) => i.insumoId);
     const insumos = await this.prisma.insumo.findMany({
-      where: { id: { in: insumoIds } },
+      where: { id: { in: insumoIds }, organizacaoId },
     });
     if (insumos.length !== insumoIds.length) {
       throw new NotFoundException('Um ou mais insumos não foram encontrados');
