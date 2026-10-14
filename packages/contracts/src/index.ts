@@ -8,3 +8,4 @@ export * from './talhao';
 export * from './safra';
 export * from './procedimento';
 export * from './insumo';
+export * from './planejamento';
