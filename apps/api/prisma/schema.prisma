@@ -118,9 +118,9 @@ model PlanejamentoItem {
   createdAt      DateTime @default(now())
 
   organizacao  Organizacao          @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
-  safra        Safra                @relation(fields: [safraId], references: [id], onDelete: Cascade)
-  talhao       Talhao               @relation(fields: [talhaoId], references: [id], onDelete: Cascade)
-  procedimento Procedimento         @relation(fields: [procedimentoId], references: [id], onDelete: Cascade)
+  safra        Safra                @relation(fields: [safraId], references: [id], onDelete: Restrict)
+  talhao       Talhao               @relation(fields: [talhaoId], references: [id], onDelete: Restrict)
+  procedimento Procedimento         @relation(fields: [procedimentoId], references: [id], onDelete: Restrict)
   insumos      PlanejamentoInsumo[]
   execucoes    ExecucaoItem[]
 
@@ -137,7 +137,7 @@ model PlanejamentoInsumo {
   precoUnitarioSnapshot Decimal @db.Decimal(12, 4)
 
   planejamentoItem PlanejamentoItem @relation(fields: [planejamentoItemId], references: [id], onDelete: Cascade)
-  insumo           Insumo           @relation(fields: [insumoId], references: [id], onDelete: Cascade)
+  insumo           Insumo           @relation(fields: [insumoId], references: [id], onDelete: Restrict)
 
   @@index([planejamentoItemId])
 }
@@ -158,9 +158,9 @@ model ExecucaoItem {
   createdAt              DateTime  @default(now())
 
   organizacao      Organizacao       @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
-  safra            Safra             @relation(fields: [safraId], references: [id], onDelete: Cascade)
-  talhao           Talhao            @relation(fields: [talhaoId], references: [id], onDelete: Cascade)
-  procedimento     Procedimento      @relation(fields: [procedimentoId], references: [id], onDelete: Cascade)
+  safra            Safra             @relation(fields: [safraId], references: [id], onDelete: Restrict)
+  talhao           Talhao            @relation(fields: [talhaoId], references: [id], onDelete: Restrict)
+  procedimento     Procedimento      @relation(fields: [procedimentoId], references: [id], onDelete: Restrict)
   planejamentoItem PlanejamentoItem? @relation(fields: [planejamentoItemId], references: [id], onDelete: SetNull)
   insumos          ExecucaoInsumo[]
 
@@ -178,7 +178,7 @@ model ExecucaoInsumo {
   precoUnitarioSnapshot Decimal @db.Decimal(12, 4)
 
   execucaoItem ExecucaoItem @relation(fields: [execucaoItemId], references: [id], onDelete: Cascade)
-  insumo       Insumo       @relation(fields: [insumoId], references: [id], onDelete: Cascade)
+  insumo       Insumo       @relation(fields: [insumoId], references: [id], onDelete: Restrict)
 
   @@index([execucaoItemId])
 }
@@ -196,9 +196,9 @@ model CompraInsumo {
   createdAt             DateTime @default(now())
 
   organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
-  talhao      Talhao      @relation(fields: [talhaoId], references: [id], onDelete: Cascade)
-  safra       Safra       @relation(fields: [safraId], references: [id], onDelete: Cascade)
-  insumo      Insumo      @relation(fields: [insumoId], references: [id], onDelete: Cascade)
+  talhao      Talhao      @relation(fields: [talhaoId], references: [id], onDelete: Restrict)
+  safra       Safra       @relation(fields: [safraId], references: [id], onDelete: Restrict)
+  insumo      Insumo      @relation(fields: [insumoId], references: [id], onDelete: Restrict)
 
   @@index([organizacaoId])
   @@index([talhaoId])

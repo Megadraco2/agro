@@ -89,15 +89,33 @@ registrada aqui para decisão futura em vez de corrigida sem pedido.
 
 ## 6. Cascade de exclusão de catálogo até histórico financeiro
 
-**Status:** ⏳ Pendente
+**Status:** ✅ Resolvido (14/10/2026)
 
 Todo FK de entidade de catálogo (Insumo, Procedimento, Safra, Talhão) para entidade transacional
-(Planejamento/Execução/CompraInsumo) é `ON DELETE CASCADE` — escolha deliberada, mas motivada pela
-conveniência de limpeza de teste (`organizacao.deleteMany()` cascateando tudo), não por uma decisão de
-produto. Um `DELETE` de Insumo apagaria as linhas de custo de execuções/planejamentos históricos, deixando o
-`custoTotal` do registro pai (que não cascateia, é só um número já gravado) incoerente com seus componentes.
-Sem rota DELETE hoje, então não é explorável ainda — mas precisa virar uma decisão explícita (trocar
-catálogo→transacional para `Restrict`) antes que qualquer rota DELETE seja adicionada.
+(PlanejamentoItem/PlanejamentoInsumo, ExecucaoItem/ExecucaoInsumo, CompraInsumo) era `ON DELETE CASCADE` —
+escolha motivada pela conveniência de limpeza de teste, não por decisão de produto. Um `DELETE` de Insumo
+apagaria as linhas de custo de execuções/planejamentos históricos, deixando o `custoTotal` do registro pai
+(que não cascateia, é só um número já gravado) incoerente com seus componentes. Corrigido preventivamente —
+sem rota DELETE ainda hoje, mas fechando a armadilha antes que uma apareça por engano:
+
+- Migration `20261014090000_restrict_catalogo_para_transacional` troca as 11 FKs catálogo→transacional de
+  `CASCADE` para `RESTRICT`: `PlanejamentoItem→{Safra,Talhao,Procedimento}`, `PlanejamentoInsumo→Insumo`,
+  `ExecucaoItem→{Safra,Talhao,Procedimento}`, `ExecucaoInsumo→Insumo`, `CompraInsumo→{Talhao,Safra,Insumo}`.
+  Ficam `CASCADE` (fora de escopo, não são catálogo→transacional): toda FK de `Organizacao` (única cascata de
+  produto real — organização removida leva tudo), `Propriedade→Talhao` (estrutural), e os pares pai-filho
+  internos ao próprio registro transacional (`PlanejamentoItem→PlanejamentoInsumo`,
+  `ExecucaoItem→ExecucaoInsumo`).
+- A troca quebrou `limparBanco()` (usado em todo `beforeEach` de teste): `organizacao.deleteMany()` dependia
+  de uma cascata concorrente entre múltiplos caminhos (`Organizacao→Insumo` direto e
+  `Organizacao→PlanejamentoItem→PlanejamentoInsumo→Insumo`) cuja ordem de resolução o Postgres não garante —
+  passou a tentar apagar o Insumo antes do PlanejamentoInsumo que ainda o referencia, e a suíte inteira
+  falhou com `P2003`. Descoberto rodando a suíte, não por suposição. Corrigido tornando
+  `apps/api/test/support/limpar-banco.ts` explícito: apaga filhos antes de pais em ordem de dependência, em
+  vez de depender da cascata de Organizacao resolver isso por conta própria.
+- 3 testes novos em `apps/api/test/integridade-referencial.test.ts` provam a trava direto via Prisma Client
+  (não existe rota DELETE pra exercitar via HTTP): rejeita apagar um Insumo referenciado por um
+  PlanejamentoInsumo, rejeita apagar uma Safra referenciada por um PlanejamentoItem, e aceita apagar um
+  registro de catálogo sem histórico vinculado.
 
 ---
 
