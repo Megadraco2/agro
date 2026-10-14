@@ -7,6 +7,7 @@ import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
 import { autenticarComoOrgAdmin } from './support/autenticar';
+import { criarFixturesAgricolas } from './support/fixtures';
 
 describe('Insumos', () => {
   let app: INestApplication;
@@ -76,5 +77,58 @@ describe('Insumos', () => {
         precoUnitarioAtual: 1_000_001,
       })
       .expect(400);
+  });
+
+  it('gets an Insumo by id', async () => {
+    const criado = await request(app.getHttpServer())
+      .post('/insumos')
+      .set('Cookie', cookie)
+      .send({ nome: 'Fox Supra', unidade: 'litro', precoUnitarioAtual: 100 })
+      .expect(201);
+
+    const obtido = await request(app.getHttpServer())
+      .get(`/insumos/${criado.body.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
+    expect(obtido.body).toMatchObject({ nome: 'Fox Supra', unidade: 'litro' });
+  });
+
+  it('rejects deleting an Insumo referenced by a CompraInsumo', async () => {
+    const { talhao, safra, insumo } = await criarFixturesAgricolas(app, cookie);
+
+    await request(app.getHttpServer())
+      .post('/compras-insumo')
+      .set('Cookie', cookie)
+      .send({
+        talhaoId: talhao.id,
+        safraId: safra.id,
+        insumoId: insumo.id,
+        data: new Date().toISOString(),
+        quantidade: 10,
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/insumos/${insumo.id}`)
+      .set('Cookie', cookie)
+      .expect(400);
+  });
+
+  it('deletes an Insumo with no history', async () => {
+    const criado = await request(app.getHttpServer())
+      .post('/insumos')
+      .set('Cookie', cookie)
+      .send({ nome: 'Adubo X', unidade: 'kg', precoUnitarioAtual: 5 })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/insumos/${criado.body.id}`)
+      .set('Cookie', cookie)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(`/insumos/${criado.body.id}`)
+      .set('Cookie', cookie)
+      .expect(404);
   });
 });

@@ -351,4 +351,22 @@ describe('Isolamento entre organizações', () => {
       .set('Cookie', cookieOrgB)
       .expect(404);
   });
+
+  it('returns 404 getting an Insumo from another organization', async () => {
+    const { insumo } = await criarFixturesAgricolas(app, cookieOrgA);
+
+    await request(app.getHttpServer())
+      .get(`/insumos/${insumo.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
+
+  it('returns 404 deleting an Insumo from another organization', async () => {
+    const { insumo } = await criarFixturesAgricolas(app, cookieOrgA);
+
+    await request(app.getHttpServer())
+      .delete(`/insumos/${insumo.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
 });

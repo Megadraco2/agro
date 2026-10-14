@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { InsumoResponse } from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
+import { excluirComRestricao } from '../common/excluir-com-restricao';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateInsumoDto, UpdateInsumoPrecoDto } from './insumos.dto';
@@ -59,6 +60,17 @@ export class InsumosService {
     });
     if (!insumo) throw new NotFoundException('Insumo não encontrado');
     return insumo;
+  }
+
+  async getById(id: string): Promise<InsumoResponse> {
+    return this.toResponse(await this.getOrThrow(id));
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.getOrThrow(id);
+    await excluirComRestricao(() =>
+      this.prisma.insumo.delete({ where: { id } }),
+    );
   }
 
   async updatePreco(
