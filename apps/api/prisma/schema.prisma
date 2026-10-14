@@ -1,9 +1,205 @@
-// Sem modelos de domínio: serão definidos após descoberta do produto.
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum TipoProcedimento {
+  APLICACAO
+  PLANTIO
+  COLHEITA
+  IRRIGACAO
+  OUTRO
+}
+
+model Organizacao {
+  id        String   @id @default(cuid())
+  nome      String
+  createdAt DateTime @default(now())
+
+  propriedades  Propriedade[]
+  safras        Safra[]
+  procedimentos Procedimento[]
+  insumos       Insumo[]
+  planejamentos PlanejamentoItem[]
+  execucoes     ExecucaoItem[]
+  comprasInsumo CompraInsumo[]
+}
+
+model Propriedade {
+  id            String   @id @default(cuid())
+  organizacaoId String
+  nome          String
+  areaHa        Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+
+  organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  talhoes     Talhao[]
+
+  @@index([organizacaoId])
+}
+
+model Talhao {
+  id            String   @id @default(cuid())
+  propriedadeId String
+  nome          String
+  areaHa        Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+
+  propriedade   Propriedade        @relation(fields: [propriedadeId], references: [id], onDelete: Cascade)
+  planejamentos PlanejamentoItem[]
+  execucoes     ExecucaoItem[]
+  comprasInsumo CompraInsumo[]
+
+  @@index([propriedadeId])
+}
+
+model Safra {
+  id            String   @id @default(cuid())
+  organizacaoId String
+  nome          String
+  cultura       String
+  dataInicio    DateTime
+  dataFim       DateTime
+  createdAt     DateTime @default(now())
+
+  organizacao   Organizacao        @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  planejamentos PlanejamentoItem[]
+  execucoes     ExecucaoItem[]
+  comprasInsumo CompraInsumo[]
+
+  @@index([organizacaoId])
+}
+
+model Procedimento {
+  id            String           @id @default(cuid())
+  organizacaoId String
+  nome          String
+  tipo          TipoProcedimento
+  createdAt     DateTime         @default(now())
+
+  organizacao   Organizacao        @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  planejamentos PlanejamentoItem[]
+  execucoes     ExecucaoItem[]
+
+  @@index([organizacaoId])
+}
+
+model Insumo {
+  id                 String   @id @default(cuid())
+  organizacaoId      String
+  nome               String
+  unidade            String
+  precoUnitarioAtual Decimal  @db.Decimal(12, 4)
+  createdAt          DateTime @default(now())
+
+  organizacao         Organizacao          @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  planejamentoInsumos PlanejamentoInsumo[]
+  execucaoInsumos     ExecucaoInsumo[]
+  comprasInsumo       CompraInsumo[]
+
+  @@index([organizacaoId])
+}
+
+model PlanejamentoItem {
+  id             String   @id @default(cuid())
+  organizacaoId  String
+  safraId        String
+  talhaoId       String
+  procedimentoId String
+  dataPrevista   DateTime
+  custoEstimado  Decimal  @db.Decimal(14, 2)
+  observacao     String?
+  createdAt      DateTime @default(now())
+
+  organizacao  Organizacao          @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  safra        Safra                @relation(fields: [safraId], references: [id], onDelete: Cascade)
+  talhao       Talhao               @relation(fields: [talhaoId], references: [id], onDelete: Cascade)
+  procedimento Procedimento         @relation(fields: [procedimentoId], references: [id], onDelete: Cascade)
+  insumos      PlanejamentoInsumo[]
+  execucoes    ExecucaoItem[]
+
+  @@index([organizacaoId])
+  @@index([safraId])
+  @@index([talhaoId])
+}
+
+model PlanejamentoInsumo {
+  id                    String  @id @default(cuid())
+  planejamentoItemId    String
+  insumoId              String
+  dosePorHa             Decimal @db.Decimal(12, 4)
+  precoUnitarioSnapshot Decimal @db.Decimal(12, 4)
+
+  planejamentoItem PlanejamentoItem @relation(fields: [planejamentoItemId], references: [id], onDelete: Cascade)
+  insumo           Insumo           @relation(fields: [insumoId], references: [id], onDelete: Cascade)
+
+  @@index([planejamentoItemId])
+}
+
+model ExecucaoItem {
+  id                     String    @id @default(cuid())
+  organizacaoId          String
+  safraId                String
+  talhaoId               String
+  procedimentoId         String
+  planejamentoItemId     String?
+  data                   DateTime
+  custoTotal             Decimal   @db.Decimal(14, 2)
+  operador               String?
+  maquina                String?
+  quantidadeColhidaSacas Decimal?  @db.Decimal(12, 2)
+  observacao             String?
+  createdAt              DateTime  @default(now())
+
+  organizacao      Organizacao       @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  safra            Safra             @relation(fields: [safraId], references: [id], onDelete: Cascade)
+  talhao           Talhao            @relation(fields: [talhaoId], references: [id], onDelete: Cascade)
+  procedimento     Procedimento      @relation(fields: [procedimentoId], references: [id], onDelete: Cascade)
+  planejamentoItem PlanejamentoItem? @relation(fields: [planejamentoItemId], references: [id], onDelete: SetNull)
+  insumos          ExecucaoInsumo[]
+
+  @@index([organizacaoId])
+  @@index([safraId])
+  @@index([talhaoId])
+  @@index([planejamentoItemId])
+}
+
+model ExecucaoInsumo {
+  id                    String  @id @default(cuid())
+  execucaoItemId        String
+  insumoId              String
+  quantidade            Decimal @db.Decimal(12, 4)
+  precoUnitarioSnapshot Decimal @db.Decimal(12, 4)
+
+  execucaoItem ExecucaoItem @relation(fields: [execucaoItemId], references: [id], onDelete: Cascade)
+  insumo       Insumo       @relation(fields: [insumoId], references: [id], onDelete: Cascade)
+
+  @@index([execucaoItemId])
+}
+
+model CompraInsumo {
+  id                    String   @id @default(cuid())
+  organizacaoId         String
+  talhaoId              String
+  safraId               String
+  insumoId              String
+  data                  DateTime
+  quantidade            Decimal  @db.Decimal(12, 4)
+  precoUnitarioSnapshot Decimal  @db.Decimal(12, 4)
+  custoTotal            Decimal  @db.Decimal(14, 2)
+  createdAt             DateTime @default(now())
+
+  organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  talhao      Talhao      @relation(fields: [talhaoId], references: [id], onDelete: Cascade)
+  safra       Safra       @relation(fields: [safraId], references: [id], onDelete: Cascade)
+  insumo      Insumo      @relation(fields: [insumoId], references: [id], onDelete: Cascade)
+
+  @@index([organizacaoId])
+  @@index([talhaoId])
+  @@index([safraId])
 }
