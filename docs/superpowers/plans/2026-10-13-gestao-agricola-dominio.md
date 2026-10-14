@@ -297,7 +297,7 @@ git commit -m "feat(db): adiciona schema de Gestão Agrícola (Propriedade, Talh
 
 ```ts
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '../../generated/prisma/client';
+import { PrismaClient } from '../generated/prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -644,7 +644,7 @@ export class UpdatePropriedadeDto {
 ```ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { PropriedadeResponse } from '@agro/contracts';
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
@@ -670,7 +670,7 @@ export class PropriedadesService {
     return {
       id: propriedade.id,
       nome: propriedade.nome,
-      areaHa: propriedade.areaHa.toString(),
+      areaHa: propriedade.areaHa.toFixed(2),
       createdAt: propriedade.createdAt.toISOString(),
     };
   }
@@ -996,7 +996,7 @@ export class UpdateTalhaoDto {
 ```ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { TalhaoResponse } from '@agro/contracts';
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateTalhaoDto, UpdateTalhaoDto } from './talhoes.dto';
 
@@ -1017,7 +1017,7 @@ export class TalhoesService {
       id: talhao.id,
       propriedadeId: talhao.propriedadeId,
       nome: talhao.nome,
-      areaHa: talhao.areaHa.toString(),
+      areaHa: talhao.areaHa.toFixed(2),
       createdAt: talhao.createdAt.toISOString(),
     };
   }
@@ -1607,7 +1607,7 @@ Expected: FAIL, módulos inexistentes.
 
 ```ts
 import { IsEnum, IsNotEmpty, IsString, MaxLength } from 'class-validator';
-import { TipoProcedimento } from '../../generated/prisma/client';
+import { TipoProcedimento } from '../generated/prisma/client';
 
 export class CreateProcedimentoDto {
   @IsString()
@@ -1625,7 +1625,7 @@ export class CreateProcedimentoDto {
 ```ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { ProcedimentoResponse } from '@agro/contracts';
-import { TipoProcedimento } from '../../generated/prisma/client';
+import { TipoProcedimento } from '../generated/prisma/client';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateProcedimentoDto } from './procedimentos.dto';
@@ -1892,7 +1892,7 @@ export class UpdateInsumoPrecoDto {
 ```ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { InsumoResponse } from '@agro/contracts';
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateInsumoDto, UpdateInsumoPrecoDto } from './insumos.dto';
@@ -1917,7 +1917,7 @@ export class InsumosService {
       id: insumo.id,
       nome: insumo.nome,
       unidade: insumo.unidade,
-      precoUnitarioAtual: insumo.precoUnitarioAtual.toString(),
+      precoUnitarioAtual: insumo.precoUnitarioAtual.toFixed(4),
       createdAt: insumo.createdAt.toISOString(),
     };
   }
@@ -2378,7 +2378,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { PlanejamentoResponse, PlanejamentoStatus } from '@agro/contracts';
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { ListFiltersDto } from '../common/list-filters.dto';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -2425,13 +2425,13 @@ export class PlanejamentosService {
       talhaoId: item.talhaoId,
       procedimentoId: item.procedimentoId,
       dataPrevista: item.dataPrevista.toISOString(),
-      custoEstimado: item.custoEstimado.toString(),
+      custoEstimado: item.custoEstimado.toFixed(2),
       observacao: item.observacao,
       status: this.computeStatus(item),
       insumos: item.insumos.map((i) => ({
         insumoId: i.insumoId,
-        dosePorHa: i.dosePorHa.toString(),
-        precoUnitarioSnapshot: i.precoUnitarioSnapshot.toString(),
+        dosePorHa: i.dosePorHa.toFixed(4),
+        precoUnitarioSnapshot: i.precoUnitarioSnapshot.toFixed(4),
       })),
       createdAt: item.createdAt.toISOString(),
     };
@@ -2912,7 +2912,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { ExecucaoResponse } from '@agro/contracts';
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { ListFiltersDto } from '../common/list-filters.dto';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -2955,15 +2955,15 @@ export class ExecucoesService {
       procedimentoId: item.procedimentoId,
       planejamentoItemId: item.planejamentoItemId,
       data: item.data.toISOString(),
-      custoTotal: item.custoTotal.toString(),
+      custoTotal: item.custoTotal.toFixed(2),
       operador: item.operador,
       maquina: item.maquina,
-      quantidadeColhidaSacas: item.quantidadeColhidaSacas?.toString() ?? null,
+      quantidadeColhidaSacas: item.quantidadeColhidaSacas?.toFixed(2) ?? null,
       observacao: item.observacao,
       insumos: item.insumos.map((i) => ({
         insumoId: i.insumoId,
-        quantidade: i.quantidade.toString(),
-        precoUnitarioSnapshot: i.precoUnitarioSnapshot.toString(),
+        quantidade: i.quantidade.toFixed(4),
+        precoUnitarioSnapshot: i.precoUnitarioSnapshot.toFixed(4),
       })),
       createdAt: item.createdAt.toISOString(),
     };
@@ -3306,7 +3306,7 @@ export class CreateCompraInsumoDto {
 ```ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { CompraInsumoResponse } from '@agro/contracts';
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { ListFiltersDto } from '../common/list-filters.dto';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -3338,9 +3338,9 @@ export class ComprasInsumoService {
       safraId: compra.safraId,
       insumoId: compra.insumoId,
       data: compra.data.toISOString(),
-      quantidade: compra.quantidade.toString(),
-      precoUnitarioSnapshot: compra.precoUnitarioSnapshot.toString(),
-      custoTotal: compra.custoTotal.toString(),
+      quantidade: compra.quantidade.toFixed(4),
+      precoUnitarioSnapshot: compra.precoUnitarioSnapshot.toFixed(4),
+      custoTotal: compra.custoTotal.toFixed(2),
       createdAt: compra.createdAt.toISOString(),
     };
   }
