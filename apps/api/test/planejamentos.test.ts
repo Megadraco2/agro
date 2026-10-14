@@ -229,4 +229,66 @@ describe('Planejamentos', () => {
       .expect(200);
     expect(notFound.body).toHaveLength(0);
   });
+
+  it('rejects deleting a Planejamento that was already executed', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app, cookie);
+
+    const planejamento = await request(app.getHttpServer())
+      .post('/planejamentos')
+      .set('Cookie', cookie)
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        dataPrevista: new Date(Date.now() + 86400000).toISOString(),
+        insumos: [{ insumoId: insumo.id, dosePorHa: 0.35 }],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/execucoes')
+      .set('Cookie', cookie)
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        planejamentoItemId: planejamento.body.id,
+        data: new Date().toISOString(),
+        insumos: [{ insumoId: insumo.id, quantidade: 700 }],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/planejamentos/${planejamento.body.id}`)
+      .set('Cookie', cookie)
+      .expect(400);
+  });
+
+  it('deletes a Planejamento that was never executed', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app, cookie);
+
+    const planejamento = await request(app.getHttpServer())
+      .post('/planejamentos')
+      .set('Cookie', cookie)
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        dataPrevista: new Date(Date.now() + 86400000).toISOString(),
+        insumos: [{ insumoId: insumo.id, dosePorHa: 0.35 }],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/planejamentos/${planejamento.body.id}`)
+      .set('Cookie', cookie)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(`/planejamentos/${planejamento.body.id}`)
+      .set('Cookie', cookie)
+      .expect(404);
+  });
 });

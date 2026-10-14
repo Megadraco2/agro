@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import type { PlanejamentoResponse, PlanejamentoStatus } from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
+import { excluirComRestricao } from '../common/excluir-com-restricao';
 import { ListFiltersDto } from '../common/list-filters.dto';
 import { validarCustoDentroDoLimite } from '../common/limite-custo';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
@@ -161,5 +162,17 @@ export class PlanejamentosService {
 
   async getById(id: string): Promise<PlanejamentoResponse> {
     return this.toResponse(await this.getOrThrow(id));
+  }
+
+  async remove(id: string): Promise<void> {
+    const item = await this.getOrThrow(id);
+    if (item.execucoes.length > 0) {
+      throw new BadRequestException(
+        'Não é possível excluir um planejamento já executado',
+      );
+    }
+    await excluirComRestricao(() =>
+      this.prisma.planejamentoItem.delete({ where: { id } }),
+    );
   }
 }

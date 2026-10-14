@@ -369,4 +369,26 @@ describe('Isolamento entre organizações', () => {
       .set('Cookie', cookieOrgB)
       .expect(404);
   });
+
+  it('returns 404 deleting a Planejamento from another organization', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app, cookieOrgA);
+
+    const planejamento = await request(app.getHttpServer())
+      .post('/planejamentos')
+      .set('Cookie', cookieOrgA)
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        dataPrevista: new Date(Date.now() + 86400000).toISOString(),
+        insumos: [{ insumoId: insumo.id, dosePorHa: 0.35 }],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/planejamentos/${planejamento.body.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
 });
