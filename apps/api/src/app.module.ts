@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AdminSistemaModule } from './admin-sistema/admin-sistema.module';
 import { AuthModule } from './auth/auth.module';
 import { ComprasInsumoModule } from './compras-insumo/compras-insumo.module';
@@ -15,6 +16,9 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60000, limit: 5 }],
+    }),
     PrismaModule,
     PropriedadesModule,
     TalhoesModule,
