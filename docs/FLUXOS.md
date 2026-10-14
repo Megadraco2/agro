@@ -4,9 +4,6 @@ Documento vivo — atualize os diagramas sempre que um fluxo de autenticação o
 papel: **laranja** = admin de sistema, **azul** = usuário chefe (ORG_ADMIN), **verde** = usuário membro
 (ORG_MEMBER), **cinza** = sistema (API/banco).
 
-> Status: reflete o design em `docs/superpowers/specs/2026-10-14-autenticacao-multiempresa-design.md`,
-> ainda não implementado. Atualize este arquivo junto com o código quando a implementação acontecer.
-
 ## Visão geral
 
 ```mermaid
@@ -47,7 +44,7 @@ flowchart TD
     A4["401"]:::sistema
     A5["Cria SessaoAdminSistema<br/>cookie agro_admin_session"]:::sistema
     A6["Portal admin: /admin/organizacoes"]:::admin
-    A7["POST /admin/organizacoes<br/>nome + maxUsuarios"]:::admin
+    A7["POST /admin/organizacoes<br/>nome + maxUsuarios + e-mail/senha do 1º usuário"]:::admin
     A8["Cria Organizacao + 1º Usuario (ORG_ADMIN)<br/>numa transação"]:::sistema
     A9["Organização pronta para uso"]:::sistema
 

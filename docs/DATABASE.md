@@ -24,3 +24,23 @@ Comandos:
 
 Nenhuma consulta é executada pelo health. Um provider Prisma com ciclo de conexão será adicionado quando houver persistência real.
 Não exponha porta do banco publicamente. Backups, recuperação, TLS e permissões de produção precisam ser definidos na implantação.
+
+## Autenticação e multiempresa
+
+A migration `20261014100000_add_autenticacao_multiempresa` adiciona 4 tabelas novas, de identidade e
+acesso (não fazem parte do domínio de Gestão Agrícola — ver docs/DOMAIN.md):
+
+- `AdminSistema` — operadores da plataforma, com `email` único e `senhaHash`.
+- `SessaoAdminSistema` — sessões revogáveis de `AdminSistema` (`expiraEm`, `revogadaEm`), referenciada
+  pelo cookie `agro_admin_session`.
+- `Usuario` — membros de uma `Organizacao`, com `email` único (global, não só por organização),
+  `senhaHash` e `papel` (`ORG_ADMIN` ou `ORG_MEMBER`).
+- `SessaoUsuario` — sessões revogáveis de `Usuario`, referenciada pelo cookie `agro_session`.
+
+Nenhuma delas é populada por migration — dados existentes de `Organizacao` permanecem sem
+`Usuario` associado; cabe ao admin de sistema criar organizações (e seu primeiro `ORG_ADMIN`) pela
+rota `POST /admin/organizacoes`, e ao `AdminBootstrapService` criar o primeiro `AdminSistema` no
+boot (ver docs/AUTH.md).
+
+A mesma migration adiciona a coluna `Organizacao.maxUsuarios` (inteiro, default `5`) — limite de
+vagas de `Usuario` por organização, verificado em `POST /usuarios` antes de criar um novo membro.

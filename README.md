@@ -2,7 +2,7 @@
 
 SaaS agrícola: Next.js/PWA e NestJS REST em monorepo pnpm/Turborepo.
 Domínio de Gestão Agrícola implementado: Propriedade, Talhão, Safra, Procedimento, Insumo, Planejamento, Execução e Compra de Insumo — ver [domínio](docs/DOMAIN.md) e [API](docs/API.md).
-Autenticação ainda não implementada; organização única e implícita por enquanto (ver [autenticação](docs/AUTH.md)).
+Autenticação e multiempresa implementadas: admin de sistema cria organizações, cada organização isola seus próprios usuários e dados — ver [autenticação](docs/AUTH.md).
 
 ## Requisitos e início
 
@@ -20,6 +20,12 @@ pnpm db:generate
 pnpm --filter @agro/api db:migrate
 pnpm dev
 ```
+
+No primeiro boot, defina `ADMIN_BOOTSTRAP_EMAIL`/`ADMIN_BOOTSTRAP_PASSWORD` em `apps/api/.env` —
+a API cria o primeiro `AdminSistema` (operador da plataforma, para logar em `/admin/login` e criar
+organizações) com essas credenciais se a tabela estiver vazia, e falha ao subir se ambas as
+condições (tabela vazia e variáveis ausentes) ocorrerem juntas. Depois que o primeiro admin existe,
+essas variáveis são ignoradas em boots seguintes.
 
 Web: http://localhost:3000. API: http://localhost:3001/health.
 Swagger: http://localhost:3001/docs. OpenAPI: /docs-json.
