@@ -80,6 +80,20 @@ export class ExecucoesService {
     return items.map((item) => this.toResponse(item));
   }
 
+  async getOrThrow(id: string): Promise<ExecucaoRow> {
+    const organizacaoId = await this.currentOrg.getId();
+    const item = await this.prisma.execucaoItem.findFirst({
+      where: { id, organizacaoId },
+      include: EXECUCAO_INCLUDE,
+    });
+    if (!item) throw new NotFoundException('Execução não encontrada');
+    return item;
+  }
+
+  async getById(id: string): Promise<ExecucaoResponse> {
+    return this.toResponse(await this.getOrThrow(id));
+  }
+
   async create(dto: CreateExecucaoDto): Promise<ExecucaoResponse> {
     const organizacaoId = await this.currentOrg.getId();
 

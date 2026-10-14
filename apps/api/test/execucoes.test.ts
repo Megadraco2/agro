@@ -268,7 +268,6 @@ describe('Execuções', () => {
       .send({ precoUnitarioAtual: 999 })
       .expect(200);
 
-    // Execução não tem GET por id — confirma via a listagem filtrada.
     const list = await request(app.getHttpServer())
       .get(`/execucoes?safraId=${safra.id}&talhaoId=${talhao.id}`)
       .set('Cookie', cookie)
@@ -278,5 +277,28 @@ describe('Execuções', () => {
     );
     expect(encontrada.custoTotal).toBe('70000.00');
     expect(encontrada.insumos[0].precoUnitarioSnapshot).toBe('100.0000');
+  });
+
+  it('gets an Execução by id', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app, cookie);
+
+    const execucao = await request(app.getHttpServer())
+      .post('/execucoes')
+      .set('Cookie', cookie)
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        data: new Date().toISOString(),
+        insumos: [{ insumoId: insumo.id, quantidade: 10 }],
+      })
+      .expect(201);
+
+    const obtida = await request(app.getHttpServer())
+      .get(`/execucoes/${execucao.body.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
+    expect(obtida.body.id).toBe(execucao.body.id);
   });
 });

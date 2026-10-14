@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ListFiltersDto } from '../common/list-filters.dto';
 import { CreateExecucaoDto } from './execucoes.dto';
@@ -17,5 +17,10 @@ export class ExecucoesController {
   @Post()
   create(@Body() dto: CreateExecucaoDto) {
     return this.service.create(dto);
+  }
+
+  @Get(':id')
+  get(@Param('id') id: string) {
+    return this.service.getById(id);
   }
 }

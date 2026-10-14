@@ -391,4 +391,24 @@ describe('Isolamento entre organizações', () => {
       .set('Cookie', cookieOrgB)
       .expect(404);
   });
+
+  it('returns 404 getting an Execução from another organization', async () => {
+    const orgA = await criarFixturesAgricolas(app, cookieOrgA);
+    const execucao = await request(app.getHttpServer())
+      .post('/execucoes')
+      .set('Cookie', cookieOrgA)
+      .send({
+        safraId: orgA.safra.id,
+        talhaoId: orgA.talhao.id,
+        procedimentoId: orgA.procedimento.id,
+        data: new Date().toISOString(),
+        insumos: [{ insumoId: orgA.insumo.id, quantidade: 10 }],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .get(`/execucoes/${execucao.body.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
 });
