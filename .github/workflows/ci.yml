@@ -9,6 +9,7 @@ on:
 env:
   NODE_VERSION: '22.16.0'
   PNPM_VERSION: '10.34.5'
+  TRIVY_SEVERITY: 'CRITICAL,HIGH'
 
 jobs:
   validate:
@@ -77,6 +78,23 @@ jobs:
       - name: Build
         run: pnpm build
 
+  security-scan:
+    name: Trivy — vulnerabilidades em dependências
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Trivy (filesystem — pnpm-lock.yaml)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: ${{ env.TRIVY_SEVERITY }}
+          exit-code: '1'
+          ignore-unfixed: true
+
   docker-build:
     name: Build da imagem Docker da API
     needs: validate
@@ -87,3 +105,12 @@ jobs:
 
       - name: Build da imagem (apps/api/Dockerfile)
         run: docker build -f apps/api/Dockerfile -t agro-api-ci .
+
+      - name: Trivy (imagem Docker da API)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: agro-api-ci
+          format: table
+          severity: ${{ env.TRIVY_SEVERITY }}
+          exit-code: '1'
+          ignore-unfixed: true
