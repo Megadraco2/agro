@@ -39,6 +39,24 @@ pnpm build
 Após criar/clonar o repositório Git, execute `pnpm prepare` para ativar os hooks.
 Não é necessário Git para compilar ou testar.
 
+### Banco de teste (uma vez por máquina)
+
+`pnpm test` usa um banco separado do `pnpm dev`, pra nunca apagar dado de desenvolvimento em andamento.
+Configure uma vez:
+
+```powershell
+Copy-Item apps/api/.env.test.example apps/api/.env.test
+# edite apps/api/.env.test trocando o nome do banco na DATABASE_URL para agro_test
+```
+
+```sh
+DATABASE_URL="postgresql://agro:change-me-local-only@localhost:5432/agro_test?schema=public" pnpm --filter @agro/api exec prisma migrate dev --name init
+```
+
+Cria o banco `agro_test` (se ainda não existir) e aplica as migrations nele. Depois disso, `pnpm test` sempre
+usa esse banco sozinho — não precisa repetir o passo. Em CI, isso não é necessário: o workflow já sobe um
+Postgres de serviço isolado por execução (ver `.github/workflows/ci.yml`).
+
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) roda lint, typecheck, test e build em todo push e Pull Request contra `dev` e `main`.

@@ -17,12 +17,15 @@ criação nunca mais acontece fora de uma migration. Ver docs/DATABASE.md e docs
 
 ## 2. Testes apagam o banco de desenvolvimento
 
-**Status:** ⏳ Pendente
+**Status:** ✅ Resolvido (14/10/2026)
 
-Todos os arquivos de teste de `apps/api` rodam contra a mesma `DATABASE_URL` que `pnpm dev` usa localmente
-(`apps/api/.env`). `pnpm test` cascateia `organizacao.deleteMany()` em todo `beforeEach`, apagando qualquer
-dado de desenvolvimento em andamento. Precisa de um banco de teste separado (`.env.test` ou override de
-`DATABASE_URL` só para o Jest) antes que isso morda alguém de verdade.
+`pnpm test` rodava contra a mesma `DATABASE_URL` que `pnpm dev` usa localmente — e isso realmente mordeu
+durante o trabalho no item 1 (um teste apagou a organização semeada do banco de dev por engano). Corrigido:
+Jest agora carrega `apps/api/.env.test` (não `.env`) via `apps/api/test/jest.setup.ts`, apontando pra um
+banco `agro_test` separado no mesmo Postgres local. Setup de uma vez por máquina documentado no README. Em CI
+não precisa de nada — o workflow já sobe um Postgres de serviço isolado por execução, e dotenv nunca
+sobrescreve env vars já setadas pelo processo (verificado simulando exatamente esse cenário: sem
+`.env.test`, só env vars de shell, suíte completa passando).
 
 ## 3. Testes que o spec pedia e nunca foram escritos
 
