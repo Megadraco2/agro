@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateTalhaoDto, UpdateTalhaoDto } from './talhoes.dto';
 import { TalhoesService } from './talhoes.service';
@@ -29,5 +38,11 @@ export class TalhoesController {
   @Patch('talhoes/:id')
   update(@Param('id') id: string, @Body() dto: UpdateTalhaoDto) {
     return this.service.update(id, dto);
+  }
+
+  @Delete('talhoes/:id')
+  @HttpCode(204)
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 }

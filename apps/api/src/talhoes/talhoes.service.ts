@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { TalhaoResponse } from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
+import { excluirComRestricao } from '../common/excluir-com-restricao';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateTalhaoDto, UpdateTalhaoDto } from './talhoes.dto';
@@ -83,5 +84,12 @@ export class TalhoesService {
       data: { nome: dto.nome, areaHa: new Prisma.Decimal(dto.areaHa) },
     });
     return this.toResponse(talhao);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.getOrThrow(id);
+    await excluirComRestricao(() =>
+      this.prisma.talhao.delete({ where: { id } }),
+    );
   }
 }

@@ -147,6 +147,15 @@ describe('Isolamento entre organizações', () => {
       .expect(404);
   });
 
+  it('returns 404 deleting a Talhão from another organization', async () => {
+    const { talhao } = await criarFixturesAgricolas(app, cookieOrgA);
+
+    await request(app.getHttpServer())
+      .delete(`/talhoes/${talhao.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
+
   it('returns 404 creating a Planejamento that references a Talhao from another organization', async () => {
     const { talhao, procedimento, insumo } = await criarFixturesAgricolas(
       app,

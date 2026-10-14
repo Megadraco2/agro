@@ -7,6 +7,7 @@ import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
 import { autenticarComoOrgAdmin } from './support/autenticar';
+import { criarFixturesAgricolas } from './support/fixtures';
 
 describe('Talhões', () => {
   let app: INestApplication;
@@ -101,5 +102,41 @@ describe('Talhões', () => {
       nome: 'Talhão 1A',
       areaHa: '2500.00',
     });
+  });
+
+  it('rejects deleting a Talhão with Planejamento history', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app, cookie);
+
+    await request(app.getHttpServer())
+      .post('/planejamentos')
+      .set('Cookie', cookie)
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        dataPrevista: new Date(Date.now() + 86400000).toISOString(),
+        insumos: [{ insumoId: insumo.id, dosePorHa: 0.5 }],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/talhoes/${talhao.id}`)
+      .set('Cookie', cookie)
+      .expect(400);
+  });
+
+  it('deletes a Talhão with no history', async () => {
+    const { talhao } = await criarFixturesAgricolas(app, cookie);
+
+    await request(app.getHttpServer())
+      .delete(`/talhoes/${talhao.id}`)
+      .set('Cookie', cookie)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(`/talhoes/${talhao.id}`)
+      .set('Cookie', cookie)
+      .expect(404);
   });
 });
