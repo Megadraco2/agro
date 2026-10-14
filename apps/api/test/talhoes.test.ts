@@ -124,6 +124,11 @@ describe('Talhões', () => {
       .delete(`/talhoes/${talhao.id}`)
       .set('Cookie', cookie)
       .expect(400);
+
+    await request(app.getHttpServer())
+      .get(`/talhoes/${talhao.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
   });
 
   it('deletes a Talhão with no history', async () => {

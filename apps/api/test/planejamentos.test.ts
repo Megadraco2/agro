@@ -263,6 +263,11 @@ describe('Planejamentos', () => {
       .delete(`/planejamentos/${planejamento.body.id}`)
       .set('Cookie', cookie)
       .expect(400);
+
+    await request(app.getHttpServer())
+      .get(`/planejamentos/${planejamento.body.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
   });
 
   it('deletes a Planejamento that was never executed', async () => {

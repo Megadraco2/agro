@@ -259,6 +259,11 @@ describe('Safras', () => {
       .delete(`/safras/${safra.id}`)
       .set('Cookie', cookie)
       .expect(400);
+
+    await request(app.getHttpServer())
+      .get(`/safras/${safra.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
   });
 
   it('deletes a Safra with no history', async () => {

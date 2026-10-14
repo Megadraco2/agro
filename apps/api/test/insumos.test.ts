@@ -112,6 +112,11 @@ describe('Insumos', () => {
       .delete(`/insumos/${insumo.id}`)
       .set('Cookie', cookie)
       .expect(400);
+
+    await request(app.getHttpServer())
+      .get(`/insumos/${insumo.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
   });
 
   it('deletes an Insumo with no history', async () => {

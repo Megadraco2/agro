@@ -111,6 +111,11 @@ describe('Procedimentos', () => {
       .delete(`/procedimentos/${procedimento.id}`)
       .set('Cookie', cookie)
       .expect(400);
+
+    await request(app.getHttpServer())
+      .get(`/procedimentos/${procedimento.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
   });
 
   it('deletes a Procedimento with no history', async () => {
