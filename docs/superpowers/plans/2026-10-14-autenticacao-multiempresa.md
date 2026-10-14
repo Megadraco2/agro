@@ -2477,13 +2477,19 @@ git commit -m "fix(api): fecha o isolamento entre organizações em todo lookup 
 
 Run: `cd apps/api && pnpm add @nestjs/throttler`
 
-- [ ] **Step 2: Registrar o módulo globalmente**
+- [ ] **Step 2: Registrar o módulo (sem aplicar globalmente)**
 
-Em `apps/api/src/app.module.ts`:
+**Importante:** `ThrottlerGuard` NÃO pode ser registrado como `APP_GUARD` global — isso aplicaria o limite de
+5 requisições/minuto a TODA rota da aplicação usando um balde compartilhado por IP, não só aos dois logins.
+Em testes, `supertest` faz todas as chamadas do mesmo processo parecerem vir do mesmo IP local — qualquer
+arquivo de teste de domínio que já faça mais de 5 requisições por `it` (a maioria faz) passaria a receber 429
+em requisições completamente alheias a login, quebrando as suítes das Tasks 1-6. O guard precisa ser aplicado
+só nas duas rotas de login.
+
+Em `apps/api/src/app.module.ts`, adicione só o import do módulo (sem `APP_GUARD`):
 
 ```typescript
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 // ...
 @Module({
   imports: [
@@ -2493,13 +2499,25 @@ import { APP_GUARD } from '@nestjs/core';
     // ...módulos existentes sem mudança...
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  // ...providers existentes sem mudança (sem APP_GUARD aqui)...
 })
 export class AppModule {}
 ```
 
-(este `APP_GUARD` é separado do `AuthGuard` aplicado em `main.ts` via `useGlobalGuards` — os dois rodam
-juntos, sem conflito; o Throttler protege contra volume, o Auth contra sessão ausente.)
+Em `apps/api/src/auth/auth.controller.ts`, aplique o guard só no método `login`:
+
+```typescript
+import { UseGuards } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
+// ...
+  @Post('login')
+  @HttpCode(200)
+  @UseGuards(ThrottlerGuard)
+  async login(
+```
+
+Em `apps/api/src/admin-sistema/admin-auth.controller.ts`, o mesmo, no método `login` do
+`AdminAuthController`.
 
 - [ ] **Step 3: Rodar a suíte pra confirmar que nada quebrou**
 
@@ -2566,7 +2584,7 @@ por `it`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add apps/api/src/app.module.ts apps/api/package.json pnpm-lock.yaml apps/api/test/rate-limit-login.test.ts
+git add apps/api/src/app.module.ts apps/api/src/auth/auth.controller.ts apps/api/src/admin-sistema/admin-auth.controller.ts apps/api/package.json pnpm-lock.yaml apps/api/test/rate-limit-login.test.ts
 git commit -m "feat(api): adiciona rate limit nos endpoints de login"
 ```
 
