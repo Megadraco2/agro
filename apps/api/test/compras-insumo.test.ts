@@ -148,4 +148,26 @@ describe('Compras de Insumo', () => {
       })
       .expect(404);
   });
+
+  it('gets a CompraInsumo by id', async () => {
+    const { talhao, safra, insumo } = await criarFixturesAgricolas(app, cookie);
+
+    const compra = await request(app.getHttpServer())
+      .post('/compras-insumo')
+      .set('Cookie', cookie)
+      .send({
+        talhaoId: talhao.id,
+        safraId: safra.id,
+        insumoId: insumo.id,
+        data: new Date().toISOString(),
+        quantidade: 10,
+      })
+      .expect(201);
+
+    const obtida = await request(app.getHttpServer())
+      .get(`/compras-insumo/${compra.body.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
+    expect(obtida.body.id).toBe(compra.body.id);
+  });
 });

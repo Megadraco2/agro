@@ -411,4 +411,24 @@ describe('Isolamento entre organizações', () => {
       .set('Cookie', cookieOrgB)
       .expect(404);
   });
+
+  it('returns 404 getting a CompraInsumo from another organization', async () => {
+    const orgA = await criarFixturesAgricolas(app, cookieOrgA);
+    const compra = await request(app.getHttpServer())
+      .post('/compras-insumo')
+      .set('Cookie', cookieOrgA)
+      .send({
+        talhaoId: orgA.talhao.id,
+        safraId: orgA.safra.id,
+        insumoId: orgA.insumo.id,
+        data: new Date().toISOString(),
+        quantidade: 10,
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .get(`/compras-insumo/${compra.body.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
 });

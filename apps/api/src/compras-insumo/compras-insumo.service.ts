@@ -57,6 +57,19 @@ export class ComprasInsumoService {
     return compras.map((c) => this.toResponse(c));
   }
 
+  async getOrThrow(id: string): Promise<CompraInsumoRow> {
+    const organizacaoId = await this.currentOrg.getId();
+    const compra = await this.prisma.compraInsumo.findFirst({
+      where: { id, organizacaoId },
+    });
+    if (!compra) throw new NotFoundException('Compra de insumo não encontrada');
+    return compra;
+  }
+
+  async getById(id: string): Promise<CompraInsumoResponse> {
+    return this.toResponse(await this.getOrThrow(id));
+  }
+
   async create(dto: CreateCompraInsumoDto): Promise<CompraInsumoResponse> {
     const organizacaoId = await this.currentOrg.getId();
 
