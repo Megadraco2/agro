@@ -74,6 +74,55 @@ describe('Planejamentos', () => {
     expect(got.body.status).toBe('ATRASADO');
   });
 
+  it('rejects dosePorHa above the maximum', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app);
+    await request(app.getHttpServer())
+      .post('/planejamentos')
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        dataPrevista: new Date().toISOString(),
+        insumos: [{ insumoId: insumo.id, dosePorHa: 10_001 }],
+      })
+      .expect(400);
+  });
+
+  it('rejects when the computed custoEstimado would exceed the storable limit', async () => {
+    // Cada campo individualmente dentro do próprio @Max, mas o produto
+    // estoura o limite de custoEstimado calculado (ver limite-custo.ts).
+    const propriedade = await request(app.getHttpServer())
+      .post('/propriedades')
+      .send({ nome: 'Fazenda Gigante', areaHa: 1_000_000 })
+      .expect(201);
+    const talhaoGigante = await request(app.getHttpServer())
+      .post(`/propriedades/${propriedade.body.id}/talhoes`)
+      .send({ nome: 'Talhão Gigante', areaHa: 1_000_000 })
+      .expect(201);
+    const insumoCaro = await request(app.getHttpServer())
+      .post('/insumos')
+      .send({
+        nome: 'Insumo Caríssimo',
+        unidade: 'litro',
+        precoUnitarioAtual: 1_000_000,
+      })
+      .expect(201);
+    const { safra, procedimento } = await criarFixturesAgricolas(app);
+
+    await request(app.getHttpServer())
+      .post('/planejamentos')
+      .send({
+        safraId: safra.id,
+        talhaoId: talhaoGigante.body.id,
+        procedimentoId: procedimento.id,
+        dataPrevista: new Date().toISOString(),
+        // 1 * 1.000.000 ha * R$1.000.000/l = R$1.000.000.000.000 (acima do limite)
+        insumos: [{ insumoId: insumoCaro.body.id, dosePorHa: 1 }],
+      })
+      .expect(400);
+  });
+
   it('rejects planejamento referencing an unknown talhao', async () => {
     const { safra, procedimento, insumo } = await criarFixturesAgricolas(app);
     await request(app.getHttpServer())

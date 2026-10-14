@@ -100,6 +100,69 @@ describe('Execuções', () => {
     expect(colheita.body.quantidadeColhidaSacas).toBe('500.00');
   });
 
+  it('rejects quantidade above the maximum', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app);
+    await request(app.getHttpServer())
+      .post('/execucoes')
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        data: new Date().toISOString(),
+        insumos: [{ insumoId: insumo.id, quantidade: 10_000_001 }],
+      })
+      .expect(400);
+  });
+
+  it('rejects quantidadeColhidaSacas above the maximum', async () => {
+    const { talhao, safra, procedimentoColheita, insumo } =
+      await criarFixturesAgricolas(app);
+    await request(app.getHttpServer())
+      .post('/execucoes')
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimentoColheita.id,
+        data: new Date().toISOString(),
+        quantidadeColhidaSacas: 10_000_001,
+        insumos: [{ insumoId: insumo.id, quantidade: 1 }],
+      })
+      .expect(400);
+  });
+
+  it('rejects when the computed custoTotal would exceed the storable limit', async () => {
+    const propriedade = await request(app.getHttpServer())
+      .post('/propriedades')
+      .send({ nome: 'Fazenda Gigante', areaHa: 1_000_000 })
+      .expect(201);
+    const talhaoGigante = await request(app.getHttpServer())
+      .post(`/propriedades/${propriedade.body.id}/talhoes`)
+      .send({ nome: 'Talhão Gigante', areaHa: 1_000_000 })
+      .expect(201);
+    const insumoCaro = await request(app.getHttpServer())
+      .post('/insumos')
+      .send({
+        nome: 'Insumo Caríssimo',
+        unidade: 'litro',
+        precoUnitarioAtual: 1_000_000,
+      })
+      .expect(201);
+    const { safra, procedimento } = await criarFixturesAgricolas(app);
+
+    await request(app.getHttpServer())
+      .post('/execucoes')
+      .send({
+        safraId: safra.id,
+        talhaoId: talhaoGigante.body.id,
+        procedimentoId: procedimento.id,
+        data: new Date().toISOString(),
+        // 1.000.000 l * R$1.000.000/l = R$1.000.000.000.000 (acima do limite)
+        insumos: [{ insumoId: insumoCaro.body.id, quantidade: 1_000_000 }],
+      })
+      .expect(400);
+  });
+
   it('rejects execução whose safra/talhao/procedimento diverge from the linked planejamento', async () => {
     const { talhao, safra, procedimento, procedimentoColheita, insumo } =
       await criarFixturesAgricolas(app);

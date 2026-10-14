@@ -56,4 +56,15 @@ describe('Insumos', () => {
       .expect(200);
     expect(updated.body.precoUnitarioAtual).toBe('110.5000');
   });
+
+  it('rejects precoUnitarioAtual above the maximum', async () => {
+    await request(app.getHttpServer())
+      .post('/insumos')
+      .send({
+        nome: 'Insumo Caríssimo',
+        unidade: 'litro',
+        precoUnitarioAtual: 1_000_001,
+      })
+      .expect(400);
+  });
 });

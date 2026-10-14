@@ -85,6 +85,44 @@ describe('Compras de Insumo', () => {
     expect(encontrada.precoUnitarioSnapshot).toBe('100.0000');
   });
 
+  it('rejects quantidade above the maximum', async () => {
+    const { talhao, safra, insumo } = await criarFixturesAgricolas(app);
+    await request(app.getHttpServer())
+      .post('/compras-insumo')
+      .send({
+        talhaoId: talhao.id,
+        safraId: safra.id,
+        insumoId: insumo.id,
+        data: new Date().toISOString(),
+        quantidade: 10_000_001,
+      })
+      .expect(400);
+  });
+
+  it('rejects when the computed custoTotal would exceed the storable limit', async () => {
+    const { talhao, safra } = await criarFixturesAgricolas(app);
+    const insumoCaro = await request(app.getHttpServer())
+      .post('/insumos')
+      .send({
+        nome: 'Insumo Caríssimo',
+        unidade: 'litro',
+        precoUnitarioAtual: 1_000_000,
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/compras-insumo')
+      .send({
+        talhaoId: talhao.id,
+        safraId: safra.id,
+        insumoId: insumoCaro.body.id,
+        data: new Date().toISOString(),
+        // 1.000.000 l * R$1.000.000/l = R$1.000.000.000.000 (acima do limite)
+        quantidade: 1_000_000,
+      })
+      .expect(400);
+  });
+
   it('rejects compra referencing an unknown insumo', async () => {
     const { talhao, safra } = await criarFixturesAgricolas(app);
     await request(app.getHttpServer())

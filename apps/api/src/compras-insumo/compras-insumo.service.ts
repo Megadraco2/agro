@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { CompraInsumoResponse } from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
 import { ListFiltersDto } from '../common/list-filters.dto';
+import { validarCustoDentroDoLimite } from '../common/limite-custo';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateCompraInsumoDto } from './compras-insumo.dto';
@@ -71,6 +72,8 @@ export class ComprasInsumoService {
     const custoTotal = new Prisma.Decimal(dto.quantidade).mul(
       insumo.precoUnitarioAtual,
     );
+
+    validarCustoDentroDoLimite(custoTotal);
 
     const compra = await this.prisma.compraInsumo.create({
       data: {

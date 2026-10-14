@@ -6,6 +6,7 @@ import {
 import type { ExecucaoResponse } from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
 import { ListFiltersDto } from '../common/list-filters.dto';
+import { validarCustoDentroDoLimite } from '../common/limite-custo';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateExecucaoDto } from './execucoes.dto';
@@ -146,6 +147,8 @@ export class ExecucoesService {
         precoUnitarioSnapshot: insumo.precoUnitarioAtual,
       };
     });
+
+    validarCustoDentroDoLimite(custoTotal);
 
     const execucao = await this.prisma.execucaoItem.create({
       data: {

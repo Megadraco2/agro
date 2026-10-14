@@ -53,6 +53,13 @@ describe('Propriedades', () => {
       .expect(400);
   });
 
+  it('rejects areaHa above the maximum', async () => {
+    await request(app.getHttpServer())
+      .post('/propriedades')
+      .send({ nome: 'Fazenda Gigante', areaHa: 1_000_001 })
+      .expect(400);
+  });
+
   it('returns 404 for unknown propriedade', async () => {
     await request(app.getHttpServer())
       .get('/propriedades/unknown-id')

@@ -56,6 +56,14 @@ describe('Talhões', () => {
     expect(list.body).toHaveLength(1);
   });
 
+  it('rejects areaHa above the maximum', async () => {
+    const propriedade = await criarPropriedade();
+    await request(app.getHttpServer())
+      .post(`/propriedades/${propriedade.id}/talhoes`)
+      .send({ nome: 'Talhão Gigante', areaHa: 1_000_001 })
+      .expect(400);
+  });
+
   it('rejects talhão for an unknown propriedade', async () => {
     await request(app.getHttpServer())
       .post('/propriedades/nao-existe/talhoes')

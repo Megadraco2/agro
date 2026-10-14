@@ -52,13 +52,22 @@ O terceiro **não é testável ainda**, e por isso continua fora:
 
 ## 4. Sem limite máximo em campos numéricos
 
-**Status:** ⏳ Pendente
+**Status:** ✅ Resolvido (14/10/2026)
 
-Nenhum DTO tem `@Max` — só `@IsPositive()`. `custoEstimado` é o produto de três campos independentemente
-validados (`dosePorHa × talhao.areaHa × insumo.precoUnitarioAtual`); uma combinação de valores
-individualmente plausíveis pode estourar o `DECIMAL(14,2)` e virar um 500 não tratado (overflow do Postgres)
-em vez de um 400 de validação. Precisa de limites por campo — depende de decisão de produto sobre valores
-realistas (área máxima de propriedade, preço máximo de insumo etc.), não é só código.
+Nenhum DTO tinha `@Max` — só `@IsPositive()`. Corrigido em duas camadas, porque uma só não bastava: limites
+por campo generosos (`@Max`) sozinhos não impedem o estouro do **resultado calculado**, já que campos
+individualmente válidos se multiplicam (`dosePorHa × talhao.areaHa × insumo.precoUnitarioAtual`).
+
+1. **`@Max` por campo** (sanidade básica, 400 imediato): área de Propriedade/Talhão até 1.000.000 ha, preço
+   de Insumo até R$1.000.000/unidade, dose por ha até 10.000, quantidade (Execução/Compra) até 10.000.000,
+   sacas colhidas até 10.000.000 — todos bem acima de qualquer cenário real.
+2. **Checagem do resultado calculado** (`apps/api/src/common/limite-custo.ts`): antes de persistir
+   `custoEstimado`/`custoTotal`, valida contra um teto de R$100 bilhões (bem abaixo da capacidade real da
+   coluna `Decimal(14,2)`, ~R$1 trilhão) — se estourar, 400 explícito em vez de deixar o Postgres falhar
+   sozinho. Usado por Planejamento, Execução e CompraInsumo, os três que calculam custo.
+
+10 testes novos (6 de limite por campo + 4 de estouro do resultado calculado, combinando valores
+individualmente válidos que juntos excedem o teto).
 
 ## 5. PATCH de Safra invalida retroativamente Planejamento/Execução
 
