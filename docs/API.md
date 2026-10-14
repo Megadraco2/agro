@@ -25,5 +25,6 @@ Ambiente privado:
 - CORS_ORIGIN: origem exata do frontend, sem barra final; obrigatória.
 - DATABASE_URL: URL PostgreSQL obrigatória; não é devolvida em erros.
 - NODE_ENV: development, test ou production.
+- TRUST_PROXY_HOPS: inteiro >= 0, padrão 1; número de hops de proxy reverso confiáveis na frente da API (ver docs/AUTH.md).
 
 CORS permite GET, POST e PATCH na origem configurada. Expandir métodos somente com novos contratos.

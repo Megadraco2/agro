@@ -14,8 +14,11 @@ async function bootstrap() {
   // Rate limiting (ThrottlerGuard) precisa do IP real do cliente, não do
   // ingress do Kubernetes que fica na frente do pod em produção — sem isso,
   // req.ip reportaria sempre o IP do ingress e todos os usuários cairiam no
-  // mesmo balde de 5 logins/min. "1" = confia em 1 hop de proxy reverso.
-  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  // mesmo balde de 5 logins/min. TRUST_PROXY_HOPS (padrão 1) = quantos hops
+  // de proxy reverso são confiáveis; precisa bater com a topologia real do
+  // cluster (a menos colapsa todos num balde só; a mais permite forjar o IP
+  // via X-Forwarded-For). Ver docs/AUTH.md.
+  app.getHttpAdapter().getInstance().set('trust proxy', env.TRUST_PROXY_HOPS);
   configureApp(app, env.CORS_ORIGIN);
   await app.listen(env.PORT, '0.0.0.0');
 }

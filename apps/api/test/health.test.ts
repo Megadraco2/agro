@@ -54,5 +54,25 @@ describe('Foundation API', () => {
         DATABASE_URL: 'postgresql://localhost/agro',
       }).PORT,
     ).toBe(3001);
+    expect(
+      readEnv({
+        CORS_ORIGIN: 'http://localhost:3000',
+        DATABASE_URL: 'postgresql://localhost/agro',
+      }).TRUST_PROXY_HOPS,
+    ).toBe(1);
+    expect(
+      readEnv({
+        CORS_ORIGIN: 'http://localhost:3000',
+        DATABASE_URL: 'postgresql://localhost/agro',
+        TRUST_PROXY_HOPS: '2',
+      }).TRUST_PROXY_HOPS,
+    ).toBe(2);
+    expect(() =>
+      readEnv({
+        CORS_ORIGIN: 'http://localhost:3000',
+        DATABASE_URL: 'postgresql://localhost/agro',
+        TRUST_PROXY_HOPS: '-1',
+      }),
+    ).toThrow('TRUST_PROXY_HOPS');
   });
 });
