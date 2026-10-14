@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreatePropriedadeDto, UpdatePropriedadeDto } from './propriedades.dto';
 import { PropriedadesService } from './propriedades.service';
@@ -26,5 +35,11 @@ export class PropriedadesController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdatePropriedadeDto) {
     return this.service.update(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 }

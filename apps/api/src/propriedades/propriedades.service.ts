@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { PropriedadeResponse } from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
+import { excluirComRestricao } from '../common/excluir-com-restricao';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
@@ -75,5 +76,12 @@ export class PropriedadesService {
       data: { nome: dto.nome, areaHa: new Prisma.Decimal(dto.areaHa) },
     });
     return this.toResponse(propriedade);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.getOrThrow(id);
+    await excluirComRestricao(() =>
+      this.prisma.propriedade.delete({ where: { id } }),
+    );
   }
 }
