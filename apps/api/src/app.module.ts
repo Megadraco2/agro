@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ExecucoesModule } from './execucoes/execucoes.module';
 import { HealthController } from './health.controller';
 import { InsumosModule } from './insumos/insumos.module';
 import { PlanejamentosModule } from './planejamentos/planejamentos.module';
@@ -17,6 +18,7 @@ import { TalhoesModule } from './talhoes/talhoes.module';
     ProcedimentosModule,
     InsumosModule,
     PlanejamentosModule,
+    ExecucoesModule,
   ],
   controllers: [HealthController],
 })
