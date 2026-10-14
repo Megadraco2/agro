@@ -18,7 +18,8 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      "env": ["DATABASE_URL", "CORS_ORIGIN", "PORT", "NODE_ENV"]
     }
   }
 }
