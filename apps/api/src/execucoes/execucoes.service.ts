@@ -134,14 +134,15 @@ export class ExecucoesService {
     }
     const insumoById = new Map(insumos.map((i) => [i.id, i]));
 
-    let custoTotal = 0;
+    let custoTotal = new Prisma.Decimal(0);
     const insumoRows = dto.insumos.map((item) => {
       const insumo = insumoById.get(item.insumoId);
       if (!insumo) throw new NotFoundException('Insumo não encontrado');
-      custoTotal += item.quantidade * insumo.precoUnitarioAtual.toNumber();
+      const quantidade = new Prisma.Decimal(item.quantidade);
+      custoTotal = custoTotal.add(quantidade.mul(insumo.precoUnitarioAtual));
       return {
         insumoId: item.insumoId,
-        quantidade: new Prisma.Decimal(item.quantidade),
+        quantidade,
         precoUnitarioSnapshot: insumo.precoUnitarioAtual,
       };
     });
@@ -154,7 +155,7 @@ export class ExecucoesService {
         procedimentoId: dto.procedimentoId,
         planejamentoItemId: dto.planejamentoItemId ?? null,
         data,
-        custoTotal: new Prisma.Decimal(custoTotal.toFixed(2)),
+        custoTotal: custoTotal.toDecimalPlaces(2),
         operador: dto.operador ?? null,
         maquina: dto.maquina ?? null,
         quantidadeColhidaSacas:

@@ -8,6 +8,7 @@
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",
+    "postinstall": "prisma generate",
     "db:validate": "prisma validate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev"

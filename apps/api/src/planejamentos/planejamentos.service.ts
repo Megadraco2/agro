@@ -110,16 +110,17 @@ export class PlanejamentosService {
     }
     const insumoById = new Map(insumos.map((i) => [i.id, i]));
 
-    const areaHa = talhao.areaHa.toNumber();
-    let custoEstimado = 0;
+    let custoEstimado = new Prisma.Decimal(0);
     const insumoRows = dto.insumos.map((item) => {
       const insumo = insumoById.get(item.insumoId);
       if (!insumo) throw new NotFoundException('Insumo não encontrado');
-      custoEstimado +=
-        item.dosePorHa * areaHa * insumo.precoUnitarioAtual.toNumber();
+      const dosePorHa = new Prisma.Decimal(item.dosePorHa);
+      custoEstimado = custoEstimado.add(
+        dosePorHa.mul(talhao.areaHa).mul(insumo.precoUnitarioAtual),
+      );
       return {
         insumoId: item.insumoId,
-        dosePorHa: new Prisma.Decimal(item.dosePorHa),
+        dosePorHa,
         precoUnitarioSnapshot: insumo.precoUnitarioAtual,
       };
     });
@@ -131,7 +132,7 @@ export class PlanejamentosService {
         talhaoId: dto.talhaoId,
         procedimentoId: dto.procedimentoId,
         dataPrevista,
-        custoEstimado: new Prisma.Decimal(custoEstimado.toFixed(2)),
+        custoEstimado: custoEstimado.toDecimalPlaces(2),
         observacao: dto.observacao ?? null,
         insumos: { create: insumoRows },
       },

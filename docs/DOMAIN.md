@@ -1,6 +1,7 @@
 # Domínio
 
-Não há entidades, agregados, regras ou dados de exemplo implementados.
-Organização, propriedade e usuário são temas de descoberta, não modelos aprovados.
+Domínio de Gestão Agrícola implementado: Propriedade, Talhão, Safra, Procedimento, Insumo, Planejamento, Execução e Compra de Insumo.
+Glossário completo, regras e relacionamentos: docs/superpowers/specs/2026-10-13-gestao-agricola-dominio-design.md.
+Organização e usuário seguem como temas de descoberta além do isolamento multi-tenant já aplicado por organizacaoId.
 
-Próxima etapa: construir glossário e mapear processos reais; decidir fronteiras de domínio e isolamento entre clientes antes das migrations.
+Próxima etapa: expandir o domínio conforme novos processos reais sejam mapeados.

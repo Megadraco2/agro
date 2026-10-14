@@ -68,7 +68,9 @@ export class ComprasInsumoService {
     if (!safra) throw new NotFoundException('Safra não encontrada');
     if (!insumo) throw new NotFoundException('Insumo não encontrado');
 
-    const custoTotal = dto.quantidade * insumo.precoUnitarioAtual.toNumber();
+    const custoTotal = new Prisma.Decimal(dto.quantidade).mul(
+      insumo.precoUnitarioAtual,
+    );
 
     const compra = await this.prisma.compraInsumo.create({
       data: {
@@ -79,7 +81,7 @@ export class ComprasInsumoService {
         data: new Date(dto.data),
         quantidade: new Prisma.Decimal(dto.quantidade),
         precoUnitarioSnapshot: insumo.precoUnitarioAtual,
-        custoTotal: new Prisma.Decimal(custoTotal.toFixed(2)),
+        custoTotal: custoTotal.toDecimalPlaces(2),
       },
     });
 

@@ -1,6 +1,9 @@
 # API
 
-NestJS REST, porta padrão 3001. Único endpoint de aplicação: GET /health.
+NestJS REST, porta padrão 3001. Endpoint de health: GET /health.
+
+Domínio de Gestão Agrícola: recursos /propriedades, /talhoes, /safras, /procedimentos, /insumos, /planejamentos, /execucoes e /compras-insumo, com métodos GET, POST e PATCH conforme o recurso.
+Formas exatas de request/response: Swagger UI em /docs (fonte da verdade, não duplicada aqui).
 
 Resposta HTTP 200, JSON:
 
@@ -14,7 +17,7 @@ Sem prefixo /api nesta fundação.
 
 Swagger UI: /docs. Documento OpenAPI: /docs-json. São rotas de documentação.
 ValidationPipe global usa whitelist, forbidNonWhitelisted e transform; futuros DTOs devem declarar validações no backend.
-A configuração de ambiente já é validada por Zod. Não existem inputs de negócio para validar.
+A configuração de ambiente já é validada por Zod. Inputs de negócio são validados por DTOs class-validator em cada recurso do domínio.
 
 Ambiente privado:
 
@@ -23,4 +26,4 @@ Ambiente privado:
 - DATABASE_URL: URL PostgreSQL obrigatória; não é devolvida em erros.
 - NODE_ENV: development, test ou production.
 
-CORS permite GET e a origem configurada. Expandir métodos somente com novos contratos.
+CORS permite GET, POST e PATCH na origem configurada. Expandir métodos somente com novos contratos.

@@ -6,8 +6,8 @@ Os valores dos exemplos servem exclusivamente ao desenvolvimento e devem ser sub
 
 apps/api/.env contém DATABASE_URL, acessível apenas ao backend/CLI Prisma.
 Mantenha usuário, senha, banco e porta coerentes com o Compose. Codifique caracteres especiais na URL.
-Prisma 6.19 usa apps/api/prisma/schema.prisma, atualmente sem modelos ou migrations.
-O gerador prisma-client permite preparar o cliente sem inventar tabelas; saída local ignorada em apps/api/generated/prisma.
+Prisma 6.19 usa apps/api/prisma/schema.prisma, com os modelos do domínio de Gestão Agrícola e a migration 20261014012732_add_gestao_agricola_dominio.
+O gerador prisma-client prepara o cliente a partir desses modelos; saída local ignorada em apps/api/src/generated/prisma.
 
 Comandos:
 
