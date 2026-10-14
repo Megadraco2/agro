@@ -71,13 +71,21 @@ individualmente válidos que juntos excedem o teto).
 
 ## 5. PATCH de Safra invalida retroativamente Planejamento/Execução
 
-**Status:** ⏳ Pendente
+**Status:** ✅ Resolvido (14/10/2026)
 
-`PATCH /safras/:id` permite reescrever `dataInicio`/`dataFim` livremente. `Planejamento`/`Execução` só validam
-"data dentro do período da safra" na criação — estreitar a janela de uma safra deixa registros já criados
-silenciosamente fora da regra, sem nenhuma revalidação. Duas saídas possíveis: rejeitar um PATCH que excluiria
-filhos existentes, ou restringir o PATCH de Safra a campos não-financeiros (mais alinhado com o que a spec já
-diz sobre campos de custo serem imutáveis).
+`PATCH /safras/:id` permitia reescrever `dataInicio`/`dataFim` livremente, mas `Planejamento`/`Execução` só
+validavam "data dentro do período da safra" na criação — estreitar a janela de uma safra existente deixava
+registros já criados silenciosamente fora da regra, sem nenhuma revalidação. Corrigido em
+`SafrasService.update()` (`apps/api/src/safras/safras.service.ts`): quando a nova janela é mais estreita que a
+atual (início adiado e/ou fim antecipado), o service consulta `PlanejamentoItem`/`ExecucaoItem` vinculados a
+essa safra e rejeita o PATCH com 400 se algum ficaria fora da nova janela. Alargar a janela nunca aciona a
+checagem — nunca invalida nada, então não precisa da query. 3 testes novos em `apps/api/test/safras.test.ts`
+(rejeita excluir um planejamento, rejeita excluir uma execução, aceita estreitar quando tudo continua dentro).
+
+Escopo deliberadamente limitado a `PlanejamentoItem`/`ExecucaoItem`, como o achado original descrevia. Durante
+a investigação, notei que `CompraInsumo` tem o mesmo campo `safraId`/`data` mas **nunca validou** "dentro do
+período da safra", nem na criação — é uma lacuna preexistente e separada, não descoberta pela revisão final,
+registrada aqui para decisão futura em vez de corrigida sem pedido.
 
 ## 6. Cascade de exclusão de catálogo até histórico financeiro
 
