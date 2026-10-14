@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { ProcedimentoResponse } from '@agro/contracts';
+import { excluirComRestricao } from '../common/excluir-com-restricao';
 import { TipoProcedimento } from '../generated/prisma/client';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
-import type { CreateProcedimentoDto } from './procedimentos.dto';
+import type {
+  CreateProcedimentoDto,
+  UpdateProcedimentoDto,
+} from './procedimentos.dto';
 
 type ProcedimentoRow = {
   id: string;
@@ -53,5 +57,28 @@ export class ProcedimentosService {
     if (!procedimento)
       throw new NotFoundException('Procedimento não encontrado');
     return procedimento;
+  }
+
+  async getById(id: string): Promise<ProcedimentoResponse> {
+    return this.toResponse(await this.getOrThrow(id));
+  }
+
+  async update(
+    id: string,
+    dto: UpdateProcedimentoDto,
+  ): Promise<ProcedimentoResponse> {
+    await this.getOrThrow(id);
+    const procedimento = await this.prisma.procedimento.update({
+      where: { id },
+      data: { nome: dto.nome, tipo: dto.tipo },
+    });
+    return this.toResponse(procedimento);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.getOrThrow(id);
+    await excluirComRestricao(() =>
+      this.prisma.procedimento.delete({ where: { id } }),
+    );
   }
 }

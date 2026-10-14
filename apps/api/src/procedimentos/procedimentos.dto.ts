@@ -10,3 +10,13 @@ export class CreateProcedimentoDto {
   @IsEnum(TipoProcedimento)
   tipo!: TipoProcedimento;
 }
+
+export class UpdateProcedimentoDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(160)
+  nome!: string;
+
+  @IsEnum(TipoProcedimento)
+  tipo!: TipoProcedimento;
+}

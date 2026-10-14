@@ -1,6 +1,18 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateProcedimentoDto } from './procedimentos.dto';
+import {
+  CreateProcedimentoDto,
+  UpdateProcedimentoDto,
+} from './procedimentos.dto';
 import { ProcedimentosService } from './procedimentos.service';
 
 @ApiTags('procedimentos')
@@ -16,5 +28,21 @@ export class ProcedimentosController {
   @Post()
   create(@Body() dto: CreateProcedimentoDto) {
     return this.service.create(dto);
+  }
+
+  @Get(':id')
+  get(@Param('id') id: string) {
+    return this.service.getById(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateProcedimentoDto) {
+    return this.service.update(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 }

@@ -323,4 +323,32 @@ describe('Isolamento entre organizações', () => {
       .expect(200);
     expect(listaOrgA.body).toHaveLength(1);
   });
+
+  it('returns 404 getting a Procedimento from another organization', async () => {
+    const { procedimento } = await criarFixturesAgricolas(app, cookieOrgA);
+
+    await request(app.getHttpServer())
+      .get(`/procedimentos/${procedimento.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
+
+  it('returns 404 updating a Procedimento from another organization', async () => {
+    const { procedimento } = await criarFixturesAgricolas(app, cookieOrgA);
+
+    await request(app.getHttpServer())
+      .patch(`/procedimentos/${procedimento.id}`)
+      .set('Cookie', cookieOrgB)
+      .send({ nome: 'Tentativa', tipo: procedimento.tipo })
+      .expect(404);
+  });
+
+  it('returns 404 deleting a Procedimento from another organization', async () => {
+    const { procedimento } = await criarFixturesAgricolas(app, cookieOrgA);
+
+    await request(app.getHttpServer())
+      .delete(`/procedimentos/${procedimento.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
 });
