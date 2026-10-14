@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "tsc-watch -p tsconfig.json --onSuccess \"node dist/main.js\"",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && cp src/generated/prisma/*.node dist/generated/prisma/",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",
