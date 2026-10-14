@@ -22,7 +22,7 @@
   - Doses/quantidades (`dosePorHa`, `quantidade`): `Decimal(12, 4)` → ex. `"0.3500"`.
   - Custos totais (`custoEstimado`, `custoTotal`): `Decimal(14, 2)` → ex. `"70000.00"`.
   - Sacas (`quantidadeColhidaSacas`): `Decimal(12, 2)`.
-  - Em TypeScript, usar `Prisma.Decimal` (importado de `../../generated/prisma/client`); converter para `number` via `.toNumber()` só para cálculo, nunca para persistir diretamente um `number` sem passar por `new Prisma.Decimal(...)`.
+  - Em TypeScript, usar `Prisma.Decimal` (importado de `../generated/prisma/client`, um nível acima de `apps/api/src/<recurso>/`). **Correção pós-revisão final:** cálculos monetários (custoEstimado/custoTotal) devem ser feitos com os métodos do próprio `Prisma.Decimal` (`.mul()`, `.add()`, `.toDecimalPlaces()`), nunca convertendo para `number` via `.toNumber()` — ponto flutuante IEEE-754 arredonda errado em exatamente centavos de meio (ex. `(2.675).toFixed(2)` dá `"2.67"`, mas `new Decimal("2.675").toFixed(2)` dá corretamente `"2.68"`). As Tasks 9, 10 e 11 originalmente instruíam `.toNumber()` para o cálculo — isso foi identificado como defeito na revisão final da branch (ver ledger) e corrigido no código já implementado; esta nota existe para não repetir o erro em specs futuras que reusem este padrão.
 - **Status do Planejamento é sempre calculado em tempo de leitura, nunca gravado em coluna** — ver Task 9.
 - **Sem rotas DELETE nesta fase.** Campos que afetam custo (`custoEstimado`, `custoTotal`, snapshots) são imutáveis após criados — não expor em nenhum DTO de `PATCH`.
 - **Isolamento de teste:** todo arquivo de teste que toca o banco deve rodar `await prisma.organizacao.deleteMany()` em `beforeEach` (cascateia e limpa tudo, por causa de `onDelete: Cascade`). Os testes rodam com `jest --runInBand` (sequencial), então isso é suficiente para isolar os arquivos entre si.
@@ -288,7 +288,7 @@ git commit -m "feat(db): adiciona schema de Gestão Agrícola (Propriedade, Talh
 
 **Interfaces:**
 
-- Consumes: `PrismaClient` de `../../generated/prisma/client` (Task 1).
+- Consumes: `PrismaClient` de `../generated/prisma/client` (Task 1 — caminho corrigido após a Task 2 mover o output gerado para dentro de `src/`).
 - Produces: `PrismaService` (injetável, global) — todas as tasks seguintes injetam `PrismaService` no construtor dos seus services.
 
 - [ ] **Step 1: Escrever PrismaService**
