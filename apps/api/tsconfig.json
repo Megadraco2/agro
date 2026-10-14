@@ -4,10 +4,10 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "outDir": "dist",
-    "rootDir": ".",
+    "rootDir": "src",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "sourceMap": true
   },
-  "include": ["src/**/*.ts", "generated/**/*.ts"]
+  "include": ["src/**/*.ts"]
 }

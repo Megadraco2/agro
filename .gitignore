@@ -7,5 +7,5 @@ coverage/
 .env.*
 !.env.example
 *.tsbuildinfo
-apps/api/generated/
+apps/api/src/generated/
 .superpowers/
