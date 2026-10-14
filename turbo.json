@@ -19,7 +19,14 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": [],
-      "env": ["DATABASE_URL", "CORS_ORIGIN", "PORT", "NODE_ENV"]
+      "env": [
+        "DATABASE_URL",
+        "CORS_ORIGIN",
+        "PORT",
+        "NODE_ENV",
+        "ADMIN_BOOTSTRAP_EMAIL",
+        "ADMIN_BOOTSTRAP_PASSWORD"
+      ]
     }
   }
 }
