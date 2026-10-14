@@ -2139,8 +2139,11 @@ export async function criarFixturesAgricolas(app: INestApplication) {
     .send({
       nome: 'Colheitas 25/26 Soja',
       cultura: 'Soja',
+      // Janela larga de propósito: cobre "hoje" com folga nos testes de
+      // Planejamento/Execução (que usam `new Date()` e +-1 dia), independente
+      // de quando este plano for de fato executado.
       dataInicio: '2025-06-01T00:00:00.000Z',
-      dataFim: '2026-06-01T00:00:00.000Z',
+      dataFim: '2030-01-01T00:00:00.000Z',
     })
     .expect(201);
 
@@ -2264,14 +2267,15 @@ describe('Planejamentos', () => {
   it('rejects dataPrevista outside the safra period', async () => {
     const { talhao, safra, procedimento, insumo } =
       await criarFixturesAgricolas(app);
-    // safra de fixtures vai de 2025-06-01 a 2026-06-01
+    // safra de fixtures começa em 2025-06-01; qualquer data antes disso
+    // está fora do período independente de quando o teste rodar.
     await request(app.getHttpServer())
       .post('/planejamentos')
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
         procedimentoId: procedimento.id,
-        dataPrevista: '2027-01-01T00:00:00.000Z',
+        dataPrevista: '2024-01-01T00:00:00.000Z',
         insumos: [{ insumoId: insumo.id, dosePorHa: 0.1 }],
       })
       .expect(400);
@@ -2786,14 +2790,15 @@ describe('Execuções', () => {
   it('rejects data outside the safra period', async () => {
     const { talhao, safra, procedimento, insumo } =
       await criarFixturesAgricolas(app);
-    // safra de fixtures vai de 2025-06-01 a 2026-06-01
+    // safra de fixtures começa em 2025-06-01; qualquer data antes disso
+    // está fora do período independente de quando o teste rodar.
     await request(app.getHttpServer())
       .post('/execucoes')
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
         procedimentoId: procedimento.id,
-        data: '2027-01-01T00:00:00.000Z',
+        data: '2024-01-01T00:00:00.000Z',
         insumos: [{ insumoId: insumo.id, quantidade: 1 }],
       })
       .expect(400);
