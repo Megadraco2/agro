@@ -25,11 +25,11 @@ describe('Foundation API', () => {
     expect(response.body).toEqual({ status: 'ok' });
     expect(response.headers['cache-control']).toBe('no-store');
   });
-  it('publishes only health in OpenAPI', async () => {
+  it('publishes health alongside domain routes in OpenAPI', async () => {
     const response = await request(app.getHttpServer())
       .get('/docs-json')
       .expect(200);
-    expect(Object.keys(response.body.paths)).toEqual(['/health']);
+    expect(response.body.paths).toHaveProperty('/health');
   });
   it('restricts CORS to the configured origin', async () => {
     const response = await request(app.getHttpServer())
