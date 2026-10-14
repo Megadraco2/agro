@@ -11,11 +11,14 @@ import type { PrismaService } from '../../src/prisma/prisma.service';
  * PlanejamentoItem->PlanejamentoInsumo->Insumo) não é garantida, e pode
  * tentar apagar o Insumo antes do PlanejamentoInsumo que ainda o referencia.
  *
- * CurrentOrganizationService.getId() é só leitura (a organização é dado de
- * infraestrutura, semeado por migration, não criado em request-time), então
- * qualquer teste que exercite um endpoint org-scoped precisa que a
- * organização padrão volte a existir depois da limpeza. Centralizado aqui
- * para não duplicar essa lógica nos ~9 arquivos de teste que precisam dela.
+ * CurrentOrganizationService.getId() resolve a organização a partir da
+ * sessão autenticada (organizacaoId do Usuario dono do cookie), não mais por
+ * slug. A organização "default" é recriada aqui porque
+ * autenticarComoOrgAdmin() (test/support/autenticar.ts) cria o usuário de
+ * teste nela, buscando-a pelo slug — e organizacao.deleteMany() acima apaga
+ * em cascata também os Usuarios e SessaoUsuario de todas as organizações.
+ * Centralizado aqui para não duplicar essa lógica nos arquivos de teste que
+ * precisam dela.
  */
 export async function limparBanco(prisma: PrismaService): Promise<void> {
   await prisma.execucaoInsumo.deleteMany();

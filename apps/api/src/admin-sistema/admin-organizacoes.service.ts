@@ -24,6 +24,9 @@ export class AdminOrganizacoesService {
   }
 
   async create(dto: CreateOrganizacaoDto): Promise<OrganizacaoAdminResponse> {
+    // Hash fora da transação: bcrypt leva ~100-250ms e não precisa segurar
+    // uma transação aberta no banco enquanto calcula.
+    const senhaHash = await hashSenha(dto.adminSenha);
     try {
       const resultado = await this.prisma.$transaction(async (tx) => {
         const organizacao = await tx.organizacao.create({
@@ -37,7 +40,7 @@ export class AdminOrganizacoesService {
           data: {
             organizacaoId: organizacao.id,
             email: dto.adminEmail,
-            senhaHash: await hashSenha(dto.adminSenha),
+            senhaHash,
             papel: 'ORG_ADMIN',
           },
         });
