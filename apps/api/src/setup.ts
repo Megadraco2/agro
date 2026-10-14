@@ -5,7 +5,7 @@ export function configureApp(app: INestApplication, origin: string) {
   app.use(cookieParser());
   app.enableCors({
     origin,
-    methods: ['GET', 'POST', 'PATCH'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     credentials: true,
   });
   app.useGlobalPipes(
