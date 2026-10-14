@@ -5,6 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { limparBanco } from './support/limpar-banco';
 
 describe('Propriedades', () => {
   let app: INestApplication;
@@ -25,7 +26,7 @@ describe('Propriedades', () => {
   });
 
   beforeEach(async () => {
-    await prisma.organizacao.deleteMany();
+    await limparBanco(prisma);
   });
 
   it('creates and lists a propriedade', async () => {

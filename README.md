@@ -80,4 +80,5 @@ As imagens usam usuário sem privilégios; otimização de tamanho e pipeline de
 - [Produto](docs/PRODUCT.md) e [domínio](docs/DOMAIN.md)
 - [Banco](docs/DATABASE.md), [API](docs/API.md) e [autenticação](docs/AUTH.md)
 - [PWA](docs/PWA.md) e [interface](docs/UI-UX.md)
+- [Backlog de robustez](docs/BACKLOG.md) — achados adiados da última revisão, com status
 - [Regras para agentes](AGENTS.md)

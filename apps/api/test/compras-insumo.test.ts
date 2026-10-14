@@ -5,6 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { limparBanco } from './support/limpar-banco';
 import { criarFixturesAgricolas } from './support/fixtures';
 
 describe('Compras de Insumo', () => {
@@ -26,7 +27,7 @@ describe('Compras de Insumo', () => {
   });
 
   beforeEach(async () => {
-    await prisma.organizacao.deleteMany();
+    await limparBanco(prisma);
   });
 
   it('creates a compra de insumo and computes custoTotal from the current price', async () => {

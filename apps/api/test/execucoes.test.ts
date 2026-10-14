@@ -5,6 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { limparBanco } from './support/limpar-banco';
 import { criarFixturesAgricolas } from './support/fixtures';
 
 describe('Execuções', () => {
@@ -26,7 +27,7 @@ describe('Execuções', () => {
   });
 
   beforeEach(async () => {
-    await prisma.organizacao.deleteMany();
+    await limparBanco(prisma);
   });
 
   it('creates an execução linked to a planejamento, computes custoTotal, and flips the planejamento status', async () => {

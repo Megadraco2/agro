@@ -18,6 +18,7 @@ enum TipoProcedimento {
 
 model Organizacao {
   id        String   @id @default(cuid())
+  slug      String   @unique
   nome      String
   createdAt DateTime @default(now())
 

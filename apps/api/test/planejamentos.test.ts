@@ -5,6 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { limparBanco } from './support/limpar-banco';
 import { criarFixturesAgricolas } from './support/fixtures';
 
 describe('Planejamentos', () => {
@@ -26,7 +27,7 @@ describe('Planejamentos', () => {
   });
 
   beforeEach(async () => {
-    await prisma.organizacao.deleteMany();
+    await limparBanco(prisma);
   });
 
   it('creates a planejamento and computes custoEstimado from insumo dose and talhao area', async () => {

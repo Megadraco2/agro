@@ -5,6 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { limparBanco } from './support/limpar-banco';
 
 describe('Talhões', () => {
   let app: INestApplication;
@@ -25,7 +26,7 @@ describe('Talhões', () => {
   });
 
   beforeEach(async () => {
-    await prisma.organizacao.deleteMany();
+    await limparBanco(prisma);
   });
 
   async function criarPropriedade() {
