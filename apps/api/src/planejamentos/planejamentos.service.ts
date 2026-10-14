@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import type { PlanejamentoResponse, PlanejamentoStatus } from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
-import { excluirComRestricao } from '../common/excluir-com-restricao';
 import { ListFiltersDto } from '../common/list-filters.dto';
 import { validarCustoDentroDoLimite } from '../common/limite-custo';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
@@ -165,14 +164,24 @@ export class PlanejamentosService {
   }
 
   async remove(id: string): Promise<void> {
-    const item = await this.getOrThrow(id);
-    if (item.execucoes.length > 0) {
+    const organizacaoId = await this.currentOrg.getId();
+    const { count } = await this.prisma.planejamentoItem.deleteMany({
+      where: { id, organizacaoId, execucoes: { none: {} } },
+    });
+    if (count === 0) {
+      // Ou o Planejamento não existe (org errada, id errado), ou ele tem ao
+      // menos uma Execução vinculada — distinguir os dois casos para manter
+      // 404 vs 400 corretos.
+      const existe = await this.prisma.planejamentoItem.findFirst({
+        where: { id, organizacaoId },
+        select: { id: true },
+      });
+      if (!existe) {
+        throw new NotFoundException('Planejamento não encontrado');
+      }
       throw new BadRequestException(
         'Não é possível excluir um planejamento já executado',
       );
     }
-    await excluirComRestricao(() =>
-      this.prisma.planejamentoItem.delete({ where: { id } }),
-    );
   }
 }
