@@ -7,3 +7,4 @@ export * from './propriedade';
 export * from './talhao';
 export * from './safra';
 export * from './procedimento';
+export * from './insumo';
