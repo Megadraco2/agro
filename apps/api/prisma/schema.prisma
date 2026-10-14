@@ -21,6 +21,7 @@ model Organizacao {
   slug      String   @unique
   nome      String
   createdAt DateTime @default(now())
+  maxUsuarios Int @default(5)
 
   propriedades  Propriedade[]
   safras        Safra[]
@@ -29,6 +30,7 @@ model Organizacao {
   planejamentos PlanejamentoItem[]
   execucoes     ExecucaoItem[]
   comprasInsumo CompraInsumo[]
+  usuarios      Usuario[]
 }
 
 model Propriedade {
@@ -203,4 +205,56 @@ model CompraInsumo {
   @@index([organizacaoId])
   @@index([talhaoId])
   @@index([safraId])
+}
+
+model AdminSistema {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  senhaHash String
+  createdAt DateTime @default(now())
+
+  sessoes SessaoAdminSistema[]
+}
+
+model SessaoAdminSistema {
+  id         String    @id @default(cuid())
+  adminId    String
+  expiraEm   DateTime
+  revogadaEm DateTime?
+  createdAt  DateTime  @default(now())
+
+  admin AdminSistema @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+}
+
+enum PapelUsuario {
+  ORG_ADMIN
+  ORG_MEMBER
+}
+
+model Usuario {
+  id            String       @id @default(cuid())
+  organizacaoId String
+  email         String       @unique
+  senhaHash     String
+  papel         PapelUsuario
+  createdAt     DateTime     @default(now())
+
+  organizacao Organizacao     @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  sessoes     SessaoUsuario[]
+
+  @@index([organizacaoId])
+}
+
+model SessaoUsuario {
+  id         String    @id @default(cuid())
+  usuarioId  String
+  expiraEm   DateTime
+  revogadaEm DateTime?
+  createdAt  DateTime  @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
 }
