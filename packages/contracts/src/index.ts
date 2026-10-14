@@ -10,3 +10,4 @@ export * from './procedimento';
 export * from './insumo';
 export * from './planejamento';
 export * from './execucao';
+export * from './compra-insumo';
