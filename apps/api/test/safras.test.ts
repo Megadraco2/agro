@@ -7,6 +7,7 @@ import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
 import { autenticarComoOrgAdmin } from './support/autenticar';
+import { criarFixturesAgricolas } from './support/fixtures';
 
 describe('Safras', () => {
   let app: INestApplication;
@@ -236,5 +237,41 @@ describe('Safras', () => {
         dataFim: '2026-01-01T00:00:00.000Z',
       })
       .expect(200);
+  });
+
+  it('rejects deleting a Safra with Planejamento history', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app, cookie);
+
+    await request(app.getHttpServer())
+      .post('/planejamentos')
+      .set('Cookie', cookie)
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        dataPrevista: new Date(Date.now() + 86400000).toISOString(),
+        insumos: [{ insumoId: insumo.id, dosePorHa: 0.5 }],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/safras/${safra.id}`)
+      .set('Cookie', cookie)
+      .expect(400);
+  });
+
+  it('deletes a Safra with no history', async () => {
+    const { safra } = await criarFixturesAgricolas(app, cookie);
+
+    await request(app.getHttpServer())
+      .delete(`/safras/${safra.id}`)
+      .set('Cookie', cookie)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(`/safras/${safra.id}`)
+      .set('Cookie', cookie)
+      .expect(404);
   });
 });

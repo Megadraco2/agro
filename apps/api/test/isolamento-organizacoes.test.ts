@@ -138,6 +138,15 @@ describe('Isolamento entre organizações', () => {
       .expect(404);
   });
 
+  it('returns 404 deleting a Safra from another organization', async () => {
+    const { safra } = await criarFixturesAgricolas(app, cookieOrgA);
+
+    await request(app.getHttpServer())
+      .delete(`/safras/${safra.id}`)
+      .set('Cookie', cookieOrgB)
+      .expect(404);
+  });
+
   it('returns 404 reading a Talhao from another organization by id (via relação com Propriedade)', async () => {
     const { talhao } = await criarFixturesAgricolas(app, cookieOrgA);
 

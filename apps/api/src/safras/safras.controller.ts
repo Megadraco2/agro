@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateSafraDto, UpdateSafraDto } from './safras.dto';
 import { SafrasService } from './safras.service';
@@ -21,6 +30,12 @@ export class SafrasController {
   @Get(':id')
   get(@Param('id') id: string) {
     return this.service.getById(id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 
   @Patch(':id')

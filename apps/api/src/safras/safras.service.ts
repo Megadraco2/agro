@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { SafraResponse } from '@agro/contracts';
+import { excluirComRestricao } from '../common/excluir-com-restricao';
 import { CurrentOrganizationService } from '../organizacao/current-organization.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateSafraDto, UpdateSafraDto } from './safras.dto';
@@ -98,6 +99,13 @@ export class SafrasService {
       },
     });
     return this.toResponse(safra);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.getOrThrow(id);
+    await excluirComRestricao(() =>
+      this.prisma.safra.delete({ where: { id } }),
+    );
   }
 
   private async garantirRegistrosDentroDaNovaJanela(
