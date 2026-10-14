@@ -44,3 +44,10 @@ boot (ver docs/AUTH.md).
 
 A mesma migration adiciona a coluna `Organizacao.maxUsuarios` (inteiro, default `5`) — limite de
 vagas de `Usuario` por organização, verificado em `POST /usuarios` antes de criar um novo membro.
+
+A migration `20261014110000_add_token_hash_sessoes` adiciona `tokenHash` (texto, único, obrigatório)
+a `SessaoAdminSistema` e `SessaoUsuario`: o SHA-256 do token aleatório que vai no cookie. O `id`
+(cuid) continua sendo a chave primária interna, mas deixou de ser o valor do cookie. Sessões que já
+existiam antes dela não têm token correspondente — a migration as preenche com um marcador
+(`legado:<id>`) que nunca casa com o hash de nenhum cookie e as marca como revogadas, sem apagar
+linhas.

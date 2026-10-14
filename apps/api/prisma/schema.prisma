@@ -219,6 +219,7 @@ model AdminSistema {
 model SessaoAdminSistema {
   id         String    @id @default(cuid())
   adminId    String
+  tokenHash  String    @unique
   expiraEm   DateTime
   revogadaEm DateTime?
   createdAt  DateTime  @default(now())
@@ -250,6 +251,7 @@ model Usuario {
 model SessaoUsuario {
   id         String    @id @default(cuid())
   usuarioId  String
+  tokenHash  String    @unique
   expiraEm   DateTime
   revogadaEm DateTime?
   createdAt  DateTime  @default(now())

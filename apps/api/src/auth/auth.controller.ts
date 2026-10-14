@@ -29,8 +29,8 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const sessaoId = await this.service.login(dto);
-    response.cookie(NOME_COOKIE, sessaoId, {
+    const token = await this.service.login(dto);
+    response.cookie(NOME_COOKIE, token, {
       httpOnly: true,
       // ver nota equivalente em AdminAuthController — Secure só em produção.
       secure: process.env.NODE_ENV === 'production',
@@ -46,8 +46,8 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const sessaoId = request.cookies?.[NOME_COOKIE] as string | undefined;
-    if (sessaoId) await this.service.logout(sessaoId);
+    const token = request.cookies?.[NOME_COOKIE] as string | undefined;
+    if (token) await this.service.logout(token);
     response.clearCookie(NOME_COOKIE);
   }
 }

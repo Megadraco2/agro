@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
+import { hashTokenSessao } from '../common/sessao-token';
 import { PrismaService } from '../prisma/prisma.service';
 import { IS_PUBLIC_KEY } from './public.decorator';
 
@@ -26,13 +27,17 @@ export class AuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<Request>();
-    const sessaoId = request.cookies?.['agro_session'] as string | undefined;
-    if (!sessaoId) {
+    const token = request.cookies?.['agro_session'] as string | undefined;
+    if (!token) {
       throw new UnauthorizedException('Sessão não encontrada');
     }
 
     const sessao = await this.prisma.sessaoUsuario.findFirst({
-      where: { id: sessaoId, revogadaEm: null, expiraEm: { gt: new Date() } },
+      where: {
+        tokenHash: hashTokenSessao(token),
+        revogadaEm: null,
+        expiraEm: { gt: new Date() },
+      },
       include: { usuario: true },
     });
     if (!sessao) {

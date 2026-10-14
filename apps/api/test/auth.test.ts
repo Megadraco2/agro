@@ -4,6 +4,8 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
+import { hashTokenSessao } from '../src/common/sessao-token';
+import { PrismaService } from '../src/prisma/prisma.service';
 
 async function criarOrganizacaoDeTeste(
   app: INestApplication,
@@ -33,6 +35,7 @@ async function criarOrganizacaoDeTeste(
 
 describe('Auth de organização', () => {
   let app: INestApplication;
+  let prisma: PrismaService;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -40,6 +43,7 @@ describe('Auth de organização', () => {
     }).compile();
     app = module.createNestApplication();
     configureApp(app, 'http://localhost:3000');
+    prisma = module.get(PrismaService);
     await app.init();
   });
 
@@ -80,6 +84,28 @@ describe('Auth de organização', () => {
       .get('/usuarios')
       .set('Cookie', cookie)
       .expect(401);
+  });
+
+  it('stores only the SHA-256 hash of the session token, never the raw cookie value', async () => {
+    const email = `chefe-${Date.now()}@teste.com`;
+    await criarOrganizacaoDeTeste(app, { email, senha: 'senha-correta-123' });
+
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email, senha: 'senha-correta-123' })
+      .expect(200);
+    const setCookie = login.headers['set-cookie']![0] as string;
+    const token = decodeURIComponent(setCookie.split(';')[0]!.split('=')[1]!);
+
+    // 32 bytes aleatórios em base64url = 43 caracteres.
+    expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const sessoes = await prisma.sessaoUsuario.findMany({
+      where: { usuario: { email } },
+    });
+    expect(sessoes).toHaveLength(1);
+    expect(sessoes[0]!.tokenHash).toBe(hashTokenSessao(token));
+    expect(sessoes[0]!.id).not.toBe(token);
+    expect(sessoes[0]!.tokenHash).not.toBe(token);
   });
 
   it('rejects requests with no session cookie', async () => {

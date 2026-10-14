@@ -12,6 +12,14 @@ Ambas as sessões são registros revogáveis em banco, não JWT stateless — de
 logout e expiração tenham efeito imediato (revogar uma linha, em vez de esperar um token expirar
 por conta própria). Cada sessão desliza sua expiração (+7 dias) a cada uso válido.
 
+## Tokens de sessão
+
+O valor do cookie é um token aleatório de 256 bits (`randomBytes(32)` em base64url, gerado por
+`gerarTokenSessao()` em `apps/api/src/common/sessao-token.ts`), não o `id` da linha de sessão. O
+banco guarda só o SHA-256 do token (`tokenHash`, único); login, logout e os guards fazem o hash do
+cookie recebido e buscam por `tokenHash`. Assim, acesso de leitura ao banco (backup, réplica, dump)
+não basta para sequestrar uma sessão. O `id` (cuid) continua existindo como chave primária interna.
+
 ## Cookies
 
 | Mundo                  | Cookie               | Guard            | Tabela de sessão     |

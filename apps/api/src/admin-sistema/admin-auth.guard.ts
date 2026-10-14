@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { hashTokenSessao } from '../common/sessao-token';
 import { PrismaService } from '../prisma/prisma.service';
 
 const SESSAO_DURACAO_MS = 7 * 24 * 60 * 60 * 1000;
@@ -15,14 +16,17 @@ export class AdminAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const sessaoId = request.cookies?.['agro_admin_session'] as
-      string | undefined;
-    if (!sessaoId) {
+    const token = request.cookies?.['agro_admin_session'] as string | undefined;
+    if (!token) {
       throw new UnauthorizedException('Sessão de admin não encontrada');
     }
 
     const sessao = await this.prisma.sessaoAdminSistema.findFirst({
-      where: { id: sessaoId, revogadaEm: null, expiraEm: { gt: new Date() } },
+      where: {
+        tokenHash: hashTokenSessao(token),
+        revogadaEm: null,
+        expiraEm: { gt: new Date() },
+      },
     });
     if (!sessao) {
       throw new UnauthorizedException('Sessão de admin inválida ou expirada');

@@ -29,8 +29,8 @@ export class AdminAuthController {
     @Body() dto: AdminLoginDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const sessaoId = await this.service.login(dto);
-    response.cookie(NOME_COOKIE, sessaoId, {
+    const token = await this.service.login(dto);
+    response.cookie(NOME_COOKIE, token, {
       httpOnly: true,
       // secure:true exige HTTPS — em dev local (http://localhost) o
       // navegador descarta silenciosamente um cookie Secure sobre HTTP, o
@@ -49,8 +49,8 @@ export class AdminAuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const sessaoId = request.cookies?.[NOME_COOKIE] as string | undefined;
-    if (sessaoId) await this.service.logout(sessaoId);
+    const token = request.cookies?.[NOME_COOKIE] as string | undefined;
+    if (token) await this.service.logout(token);
     response.clearCookie(NOME_COOKIE);
   }
 }

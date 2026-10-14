@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { verificarSenha } from '../common/senha';
+import { gerarTokenSessao, hashTokenSessao } from '../common/sessao-token';
 import { PrismaService } from '../prisma/prisma.service';
 import type { LoginDto } from './auth.dto';
 
@@ -16,18 +17,21 @@ export class AuthService {
     if (!usuario || !(await verificarSenha(dto.senha, usuario.senhaHash))) {
       throw new UnauthorizedException('Email ou senha inválidos');
     }
-    const sessao = await this.prisma.sessaoUsuario.create({
+    const { token, tokenHash } = gerarTokenSessao();
+    await this.prisma.sessaoUsuario.create({
       data: {
         usuarioId: usuario.id,
+        tokenHash,
         expiraEm: new Date(Date.now() + SESSAO_DURACAO_MS),
       },
     });
-    return sessao.id;
+    // O token cru vai só pro cookie; o banco guarda apenas o hash.
+    return token;
   }
 
-  async logout(sessaoId: string): Promise<void> {
+  async logout(token: string): Promise<void> {
     await this.prisma.sessaoUsuario.updateMany({
-      where: { id: sessaoId, revogadaEm: null },
+      where: { tokenHash: hashTokenSessao(token), revogadaEm: null },
       data: { revogadaEm: new Date() },
     });
   }

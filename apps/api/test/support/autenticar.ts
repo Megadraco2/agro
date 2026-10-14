@@ -1,5 +1,6 @@
 import type { PrismaService } from '../../src/prisma/prisma.service';
 import { hashSenha } from '../../src/common/senha';
+import { gerarTokenSessao } from '../../src/common/sessao-token';
 
 const SESSAO_DURACAO_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -25,11 +26,27 @@ export async function autenticarComoOrgAdmin(
       papel: 'ORG_ADMIN',
     },
   });
-  const sessao = await prisma.sessaoUsuario.create({
+  return criarSessaoUsuario(prisma, usuario.id);
+}
+
+/**
+ * Cria uma SessaoUsuario válida para um usuário já existente direto via
+ * Prisma (mesmo formato que AuthService.login() grava: só o hash do token
+ * no banco) e retorna o header Cookie com o token cru. Útil quando o teste
+ * precisa de vários usuários autenticados sem gastar o orçamento do rate
+ * limit de POST /auth/login (5 requisições/60s por app).
+ */
+export async function criarSessaoUsuario(
+  prisma: PrismaService,
+  usuarioId: string,
+): Promise<string> {
+  const { token, tokenHash } = gerarTokenSessao();
+  await prisma.sessaoUsuario.create({
     data: {
-      usuarioId: usuario.id,
+      usuarioId,
+      tokenHash,
       expiraEm: new Date(Date.now() + SESSAO_DURACAO_MS),
     },
   });
-  return `agro_session=${sessao.id}`;
+  return `agro_session=${token}`;
 }
