@@ -11,6 +11,11 @@ import { configureApp } from './setup';
 async function bootstrap() {
   const env = readEnv(process.env);
   const app = await NestFactory.create(AppModule);
+  // Rate limiting (ThrottlerGuard) precisa do IP real do cliente, não do
+  // ingress do Kubernetes que fica na frente do pod em produção — sem isso,
+  // req.ip reportaria sempre o IP do ingress e todos os usuários cairiam no
+  // mesmo balde de 5 logins/min. "1" = confia em 1 hop de proxy reverso.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   configureApp(app, env.CORS_ORIGIN);
   await app.listen(env.PORT, '0.0.0.0');
 }
