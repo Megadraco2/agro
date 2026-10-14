@@ -6,10 +6,12 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
+import { autenticarComoOrgAdmin } from './support/autenticar';
 
 describe('Propriedades', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let cookie: string;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -27,11 +29,13 @@ describe('Propriedades', () => {
 
   beforeEach(async () => {
     await limparBanco(prisma);
+    cookie = await autenticarComoOrgAdmin(prisma);
   });
 
   it('creates and lists a propriedade', async () => {
     const created = await request(app.getHttpServer())
       .post('/propriedades')
+      .set('Cookie', cookie)
       .send({ nome: 'Fazenda Esperança', areaHa: 10000 })
       .expect(201);
     expect(created.body).toMatchObject({
@@ -41,6 +45,7 @@ describe('Propriedades', () => {
 
     const list = await request(app.getHttpServer())
       .get('/propriedades')
+      .set('Cookie', cookie)
       .expect(200);
     expect(list.body).toHaveLength(1);
     expect(list.body[0].id).toBe(created.body.id);
@@ -49,6 +54,7 @@ describe('Propriedades', () => {
   it('rejects creation with missing fields', async () => {
     await request(app.getHttpServer())
       .post('/propriedades')
+      .set('Cookie', cookie)
       .send({ nome: 'Sem área' })
       .expect(400);
   });
@@ -56,6 +62,7 @@ describe('Propriedades', () => {
   it('rejects areaHa above the maximum', async () => {
     await request(app.getHttpServer())
       .post('/propriedades')
+      .set('Cookie', cookie)
       .send({ nome: 'Fazenda Gigante', areaHa: 1_000_001 })
       .expect(400);
   });
@@ -63,17 +70,20 @@ describe('Propriedades', () => {
   it('returns 404 for unknown propriedade', async () => {
     await request(app.getHttpServer())
       .get('/propriedades/unknown-id')
+      .set('Cookie', cookie)
       .expect(404);
   });
 
   it('updates an existing propriedade', async () => {
     const created = await request(app.getHttpServer())
       .post('/propriedades')
+      .set('Cookie', cookie)
       .send({ nome: 'Fazenda Vitória', areaHa: 4000 })
       .expect(201);
 
     const updated = await request(app.getHttpServer())
       .patch(`/propriedades/${created.body.id}`)
+      .set('Cookie', cookie)
       .send({ nome: 'Fazenda Vitória', areaHa: 4500 })
       .expect(200);
     expect(updated.body.areaHa).toBe('4500.00');

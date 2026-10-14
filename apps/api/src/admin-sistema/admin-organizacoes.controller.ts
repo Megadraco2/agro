@@ -3,8 +3,10 @@ import { ApiTags } from '@nestjs/swagger';
 import { AdminAuthGuard } from './admin-auth.guard';
 import { AdminOrganizacoesService } from './admin-organizacoes.service';
 import { CreateOrganizacaoDto } from './admin-sistema.dto';
+import { Public } from '../auth/public.decorator';
 
 @ApiTags('admin-organizacoes')
+@Public()
 @UseGuards(AdminAuthGuard)
 @Controller('admin/organizacoes')
 export class AdminOrganizacoesController {

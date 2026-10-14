@@ -6,6 +6,7 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
+import { autenticarComoOrgAdmin } from './support/autenticar';
 import { criarFixturesAgricolas } from './support/fixtures';
 
 /**
@@ -17,6 +18,7 @@ import { criarFixturesAgricolas } from './support/fixtures';
 describe('Integridade referencial catálogo → transacional', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let cookie: string;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -34,13 +36,15 @@ describe('Integridade referencial catálogo → transacional', () => {
 
   beforeEach(async () => {
     await limparBanco(prisma);
+    cookie = await autenticarComoOrgAdmin(prisma);
   });
 
   it('rejects deleting an Insumo referenced by a PlanejamentoInsumo', async () => {
     const { talhao, safra, procedimento, insumo } =
-      await criarFixturesAgricolas(app);
+      await criarFixturesAgricolas(app, cookie);
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
@@ -57,9 +61,10 @@ describe('Integridade referencial catálogo → transacional', () => {
 
   it('rejects deleting a Safra referenced by a PlanejamentoItem', async () => {
     const { talhao, safra, procedimento, insumo } =
-      await criarFixturesAgricolas(app);
+      await criarFixturesAgricolas(app, cookie);
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
@@ -75,7 +80,7 @@ describe('Integridade referencial catálogo → transacional', () => {
   });
 
   it('allows deleting a catalog record with no transactional history', async () => {
-    const { insumo } = await criarFixturesAgricolas(app);
+    const { insumo } = await criarFixturesAgricolas(app, cookie);
     await expect(
       prisma.insumo.delete({ where: { id: insumo.id } }),
     ).resolves.toMatchObject({ id: insumo.id });

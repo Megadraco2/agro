@@ -3,10 +3,12 @@ import { ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './auth.dto';
+import { Public } from './public.decorator';
 
 const NOME_COOKIE = 'agro_session';
 
 @ApiTags('auth')
+@Public()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}

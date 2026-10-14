@@ -6,11 +6,13 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
+import { autenticarComoOrgAdmin } from './support/autenticar';
 import { criarFixturesAgricolas } from './support/fixtures';
 
 describe('Planejamentos', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let cookie: string;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -28,15 +30,17 @@ describe('Planejamentos', () => {
 
   beforeEach(async () => {
     await limparBanco(prisma);
+    cookie = await autenticarComoOrgAdmin(prisma);
   });
 
   it('creates a planejamento and computes custoEstimado from insumo dose and talhao area', async () => {
     const { talhao, safra, procedimento, insumo } =
-      await criarFixturesAgricolas(app);
+      await criarFixturesAgricolas(app, cookie);
     const futura = new Date(Date.now() + 86400000).toISOString();
 
     const response = await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
@@ -54,11 +58,12 @@ describe('Planejamentos', () => {
 
   it('marks a planejamento as ATRASADO when dataPrevista has passed without execução', async () => {
     const { talhao, safra, procedimento, insumo } =
-      await criarFixturesAgricolas(app);
+      await criarFixturesAgricolas(app, cookie);
     const passada = new Date(Date.now() - 86400000).toISOString();
 
     const response = await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
@@ -70,15 +75,17 @@ describe('Planejamentos', () => {
 
     const got = await request(app.getHttpServer())
       .get(`/planejamentos/${response.body.id}`)
+      .set('Cookie', cookie)
       .expect(200);
     expect(got.body.status).toBe('ATRASADO');
   });
 
   it('rejects dosePorHa above the maximum', async () => {
     const { talhao, safra, procedimento, insumo } =
-      await criarFixturesAgricolas(app);
+      await criarFixturesAgricolas(app, cookie);
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
@@ -94,24 +101,28 @@ describe('Planejamentos', () => {
     // estoura o limite de custoEstimado calculado (ver limite-custo.ts).
     const propriedade = await request(app.getHttpServer())
       .post('/propriedades')
+      .set('Cookie', cookie)
       .send({ nome: 'Fazenda Gigante', areaHa: 1_000_000 })
       .expect(201);
     const talhaoGigante = await request(app.getHttpServer())
       .post(`/propriedades/${propriedade.body.id}/talhoes`)
+      .set('Cookie', cookie)
       .send({ nome: 'Talhão Gigante', areaHa: 1_000_000 })
       .expect(201);
     const insumoCaro = await request(app.getHttpServer())
       .post('/insumos')
+      .set('Cookie', cookie)
       .send({
         nome: 'Insumo Caríssimo',
         unidade: 'litro',
         precoUnitarioAtual: 1_000_000,
       })
       .expect(201);
-    const { safra, procedimento } = await criarFixturesAgricolas(app);
+    const { safra, procedimento } = await criarFixturesAgricolas(app, cookie);
 
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhaoGigante.body.id,
@@ -124,9 +135,13 @@ describe('Planejamentos', () => {
   });
 
   it('rejects planejamento referencing an unknown talhao', async () => {
-    const { safra, procedimento, insumo } = await criarFixturesAgricolas(app);
+    const { safra, procedimento, insumo } = await criarFixturesAgricolas(
+      app,
+      cookie,
+    );
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: 'nao-existe',
@@ -139,11 +154,12 @@ describe('Planejamentos', () => {
 
   it('rejects dataPrevista outside the safra period', async () => {
     const { talhao, safra, procedimento, insumo } =
-      await criarFixturesAgricolas(app);
+      await criarFixturesAgricolas(app, cookie);
     // safra de fixtures começa em 2025-06-01; qualquer data antes disso
     // está fora do período independente de quando o teste rodar.
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
@@ -156,10 +172,11 @@ describe('Planejamentos', () => {
 
   it('keeps custoEstimado and precoUnitarioSnapshot unchanged after the insumo price changes', async () => {
     const { talhao, safra, procedimento, insumo } =
-      await criarFixturesAgricolas(app);
+      await criarFixturesAgricolas(app, cookie);
 
     const response = await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
@@ -173,11 +190,13 @@ describe('Planejamentos', () => {
 
     await request(app.getHttpServer())
       .patch(`/insumos/${insumo.id}`)
+      .set('Cookie', cookie)
       .send({ precoUnitarioAtual: 999 })
       .expect(200);
 
     const got = await request(app.getHttpServer())
       .get(`/planejamentos/${response.body.id}`)
+      .set('Cookie', cookie)
       .expect(200);
     expect(got.body.custoEstimado).toBe('70000.00');
     expect(got.body.insumos[0].precoUnitarioSnapshot).toBe('100.0000');
@@ -185,9 +204,10 @@ describe('Planejamentos', () => {
 
   it('filters planejamentos by safraId and talhaoId', async () => {
     const { talhao, safra, procedimento, insumo } =
-      await criarFixturesAgricolas(app);
+      await criarFixturesAgricolas(app, cookie);
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.id,
         talhaoId: talhao.id,
@@ -199,11 +219,13 @@ describe('Planejamentos', () => {
 
     const found = await request(app.getHttpServer())
       .get(`/planejamentos?safraId=${safra.id}&talhaoId=${talhao.id}`)
+      .set('Cookie', cookie)
       .expect(200);
     expect(found.body).toHaveLength(1);
 
     const notFound = await request(app.getHttpServer())
       .get(`/planejamentos?safraId=${safra.id}&talhaoId=outro-talhao`)
+      .set('Cookie', cookie)
       .expect(200);
     expect(notFound.body).toHaveLength(0);
   });

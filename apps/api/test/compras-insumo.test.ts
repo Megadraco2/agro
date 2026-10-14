@@ -6,11 +6,13 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
+import { autenticarComoOrgAdmin } from './support/autenticar';
 import { criarFixturesAgricolas } from './support/fixtures';
 
 describe('Compras de Insumo', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let cookie: string;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -28,13 +30,15 @@ describe('Compras de Insumo', () => {
 
   beforeEach(async () => {
     await limparBanco(prisma);
+    cookie = await autenticarComoOrgAdmin(prisma);
   });
 
   it('creates a compra de insumo and computes custoTotal from the current price', async () => {
-    const { talhao, safra, insumo } = await criarFixturesAgricolas(app);
+    const { talhao, safra, insumo } = await criarFixturesAgricolas(app, cookie);
 
     const compra = await request(app.getHttpServer())
       .post('/compras-insumo')
+      .set('Cookie', cookie)
       .send({
         talhaoId: talhao.id,
         safraId: safra.id,
@@ -50,15 +54,17 @@ describe('Compras de Insumo', () => {
 
     const list = await request(app.getHttpServer())
       .get(`/compras-insumo?talhaoId=${talhao.id}`)
+      .set('Cookie', cookie)
       .expect(200);
     expect(list.body).toHaveLength(1);
   });
 
   it('keeps custoTotal and precoUnitarioSnapshot unchanged after the insumo price changes', async () => {
-    const { talhao, safra, insumo } = await criarFixturesAgricolas(app);
+    const { talhao, safra, insumo } = await criarFixturesAgricolas(app, cookie);
 
     const compra = await request(app.getHttpServer())
       .post('/compras-insumo')
+      .set('Cookie', cookie)
       .send({
         talhaoId: talhao.id,
         safraId: safra.id,
@@ -72,11 +78,13 @@ describe('Compras de Insumo', () => {
 
     await request(app.getHttpServer())
       .patch(`/insumos/${insumo.id}`)
+      .set('Cookie', cookie)
       .send({ precoUnitarioAtual: 999 })
       .expect(200);
 
     const list = await request(app.getHttpServer())
       .get(`/compras-insumo?talhaoId=${talhao.id}`)
+      .set('Cookie', cookie)
       .expect(200);
     const encontrada = list.body.find(
       (item: { id: string }) => item.id === compra.body.id,
@@ -86,9 +94,10 @@ describe('Compras de Insumo', () => {
   });
 
   it('rejects quantidade above the maximum', async () => {
-    const { talhao, safra, insumo } = await criarFixturesAgricolas(app);
+    const { talhao, safra, insumo } = await criarFixturesAgricolas(app, cookie);
     await request(app.getHttpServer())
       .post('/compras-insumo')
+      .set('Cookie', cookie)
       .send({
         talhaoId: talhao.id,
         safraId: safra.id,
@@ -100,9 +109,10 @@ describe('Compras de Insumo', () => {
   });
 
   it('rejects when the computed custoTotal would exceed the storable limit', async () => {
-    const { talhao, safra } = await criarFixturesAgricolas(app);
+    const { talhao, safra } = await criarFixturesAgricolas(app, cookie);
     const insumoCaro = await request(app.getHttpServer())
       .post('/insumos')
+      .set('Cookie', cookie)
       .send({
         nome: 'Insumo Caríssimo',
         unidade: 'litro',
@@ -112,6 +122,7 @@ describe('Compras de Insumo', () => {
 
     await request(app.getHttpServer())
       .post('/compras-insumo')
+      .set('Cookie', cookie)
       .send({
         talhaoId: talhao.id,
         safraId: safra.id,
@@ -124,9 +135,10 @@ describe('Compras de Insumo', () => {
   });
 
   it('rejects compra referencing an unknown insumo', async () => {
-    const { talhao, safra } = await criarFixturesAgricolas(app);
+    const { talhao, safra } = await criarFixturesAgricolas(app, cookie);
     await request(app.getHttpServer())
       .post('/compras-insumo')
+      .set('Cookie', cookie)
       .send({
         talhaoId: talhao.id,
         safraId: safra.id,

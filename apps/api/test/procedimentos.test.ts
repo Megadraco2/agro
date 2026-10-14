@@ -6,10 +6,12 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
+import { autenticarComoOrgAdmin } from './support/autenticar';
 
 describe('Procedimentos', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let cookie: string;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -27,11 +29,13 @@ describe('Procedimentos', () => {
 
   beforeEach(async () => {
     await limparBanco(prisma);
+    cookie = await autenticarComoOrgAdmin(prisma);
   });
 
   it('creates and lists a procedimento', async () => {
     const created = await request(app.getHttpServer())
       .post('/procedimentos')
+      .set('Cookie', cookie)
       .send({ nome: '1ª Aplicação de Fungicida', tipo: 'APLICACAO' })
       .expect(201);
     expect(created.body).toMatchObject({
@@ -41,6 +45,7 @@ describe('Procedimentos', () => {
 
     const list = await request(app.getHttpServer())
       .get('/procedimentos')
+      .set('Cookie', cookie)
       .expect(200);
     expect(list.body).toHaveLength(1);
   });
@@ -48,6 +53,7 @@ describe('Procedimentos', () => {
   it('rejects an unknown tipo', async () => {
     await request(app.getHttpServer())
       .post('/procedimentos')
+      .set('Cookie', cookie)
       .send({ nome: 'Procedimento inválido', tipo: 'NAO_EXISTE' })
       .expect(400);
   });

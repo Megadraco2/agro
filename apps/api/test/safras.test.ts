@@ -6,10 +6,12 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
+import { autenticarComoOrgAdmin } from './support/autenticar';
 
 describe('Safras', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let cookie: string;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -27,11 +29,13 @@ describe('Safras', () => {
 
   beforeEach(async () => {
     await limparBanco(prisma);
+    cookie = await autenticarComoOrgAdmin(prisma);
   });
 
   it('creates and lists a safra', async () => {
     const created = await request(app.getHttpServer())
       .post('/safras')
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja',
         cultura: 'Soja',
@@ -44,13 +48,17 @@ describe('Safras', () => {
       cultura: 'Soja',
     });
 
-    const list = await request(app.getHttpServer()).get('/safras').expect(200);
+    const list = await request(app.getHttpServer())
+      .get('/safras')
+      .set('Cookie', cookie)
+      .expect(200);
     expect(list.body).toHaveLength(1);
   });
 
   it('rejects dataFim before dataInicio', async () => {
     await request(app.getHttpServer())
       .post('/safras')
+      .set('Cookie', cookie)
       .send({
         nome: 'Safra inválida',
         cultura: 'Soja',
@@ -63,6 +71,7 @@ describe('Safras', () => {
   it('updates an existing safra', async () => {
     const created = await request(app.getHttpServer())
       .post('/safras')
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja',
         cultura: 'Soja',
@@ -73,6 +82,7 @@ describe('Safras', () => {
 
     const updated = await request(app.getHttpServer())
       .patch(`/safras/${created.body.id}`)
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja (revisada)',
         cultura: 'Soja',
@@ -86,18 +96,22 @@ describe('Safras', () => {
   async function criarContextoParaRegistroVinculado() {
     const propriedade = await request(app.getHttpServer())
       .post('/propriedades')
+      .set('Cookie', cookie)
       .send({ nome: 'Fazenda Esperança', areaHa: 10000 })
       .expect(201);
     const talhao = await request(app.getHttpServer())
       .post(`/propriedades/${propriedade.body.id}/talhoes`)
+      .set('Cookie', cookie)
       .send({ nome: 'Talhão 1', areaHa: 2000 })
       .expect(201);
     const procedimento = await request(app.getHttpServer())
       .post('/procedimentos')
+      .set('Cookie', cookie)
       .send({ nome: '1ª Aplicação de Fungicida', tipo: 'APLICACAO' })
       .expect(201);
     const insumo = await request(app.getHttpServer())
       .post('/insumos')
+      .set('Cookie', cookie)
       .send({ nome: 'Fox Supra', unidade: 'litro', precoUnitarioAtual: 100 })
       .expect(201);
     return {
@@ -112,6 +126,7 @@ describe('Safras', () => {
       await criarContextoParaRegistroVinculado();
     const safra = await request(app.getHttpServer())
       .post('/safras')
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja',
         cultura: 'Soja',
@@ -122,6 +137,7 @@ describe('Safras', () => {
 
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.body.id,
         talhaoId: talhao.id,
@@ -133,6 +149,7 @@ describe('Safras', () => {
 
     await request(app.getHttpServer())
       .patch(`/safras/${safra.body.id}`)
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja',
         cultura: 'Soja',
@@ -148,6 +165,7 @@ describe('Safras', () => {
       await criarContextoParaRegistroVinculado();
     const safra = await request(app.getHttpServer())
       .post('/safras')
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja',
         cultura: 'Soja',
@@ -158,6 +176,7 @@ describe('Safras', () => {
 
     await request(app.getHttpServer())
       .post('/execucoes')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.body.id,
         talhaoId: talhao.id,
@@ -169,6 +188,7 @@ describe('Safras', () => {
 
     await request(app.getHttpServer())
       .patch(`/safras/${safra.body.id}`)
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja',
         cultura: 'Soja',
@@ -184,6 +204,7 @@ describe('Safras', () => {
       await criarContextoParaRegistroVinculado();
     const safra = await request(app.getHttpServer())
       .post('/safras')
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja',
         cultura: 'Soja',
@@ -194,6 +215,7 @@ describe('Safras', () => {
 
     await request(app.getHttpServer())
       .post('/planejamentos')
+      .set('Cookie', cookie)
       .send({
         safraId: safra.body.id,
         talhaoId: talhao.id,
@@ -205,6 +227,7 @@ describe('Safras', () => {
 
     await request(app.getHttpServer())
       .patch(`/safras/${safra.body.id}`)
+      .set('Cookie', cookie)
       .send({
         nome: 'Colheitas 25/26 Soja',
         cultura: 'Soja',

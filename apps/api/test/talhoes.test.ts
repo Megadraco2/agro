@@ -6,10 +6,12 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { limparBanco } from './support/limpar-banco';
+import { autenticarComoOrgAdmin } from './support/autenticar';
 
 describe('Talhões', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let cookie: string;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -27,11 +29,13 @@ describe('Talhões', () => {
 
   beforeEach(async () => {
     await limparBanco(prisma);
+    cookie = await autenticarComoOrgAdmin(prisma);
   });
 
   async function criarPropriedade() {
     const response = await request(app.getHttpServer())
       .post('/propriedades')
+      .set('Cookie', cookie)
       .send({ nome: 'Fazenda Esperança', areaHa: 10000 })
       .expect(201);
     return response.body;
@@ -42,6 +46,7 @@ describe('Talhões', () => {
 
     const created = await request(app.getHttpServer())
       .post(`/propriedades/${propriedade.id}/talhoes`)
+      .set('Cookie', cookie)
       .send({ nome: 'Talhão 1', areaHa: 2000 })
       .expect(201);
     expect(created.body).toMatchObject({
@@ -52,6 +57,7 @@ describe('Talhões', () => {
 
     const list = await request(app.getHttpServer())
       .get(`/propriedades/${propriedade.id}/talhoes`)
+      .set('Cookie', cookie)
       .expect(200);
     expect(list.body).toHaveLength(1);
   });
@@ -60,6 +66,7 @@ describe('Talhões', () => {
     const propriedade = await criarPropriedade();
     await request(app.getHttpServer())
       .post(`/propriedades/${propriedade.id}/talhoes`)
+      .set('Cookie', cookie)
       .send({ nome: 'Talhão Gigante', areaHa: 1_000_001 })
       .expect(400);
   });
@@ -67,6 +74,7 @@ describe('Talhões', () => {
   it('rejects talhão for an unknown propriedade', async () => {
     await request(app.getHttpServer())
       .post('/propriedades/nao-existe/talhoes')
+      .set('Cookie', cookie)
       .send({ nome: 'Talhão 1', areaHa: 2000 })
       .expect(404);
   });
@@ -75,15 +83,18 @@ describe('Talhões', () => {
     const propriedade = await criarPropriedade();
     const created = await request(app.getHttpServer())
       .post(`/propriedades/${propriedade.id}/talhoes`)
+      .set('Cookie', cookie)
       .send({ nome: 'Talhão 1', areaHa: 2000 })
       .expect(201);
 
     await request(app.getHttpServer())
       .get(`/talhoes/${created.body.id}`)
+      .set('Cookie', cookie)
       .expect(200);
 
     const updated = await request(app.getHttpServer())
       .patch(`/talhoes/${created.body.id}`)
+      .set('Cookie', cookie)
       .send({ nome: 'Talhão 1A', areaHa: 2500 })
       .expect(200);
     expect(updated.body).toMatchObject({

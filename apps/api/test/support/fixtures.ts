@@ -1,19 +1,25 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
-export async function criarFixturesAgricolas(app: INestApplication) {
+export async function criarFixturesAgricolas(
+  app: INestApplication,
+  cookie: string,
+) {
   const propriedade = await request(app.getHttpServer())
     .post('/propriedades')
+    .set('Cookie', cookie)
     .send({ nome: 'Fazenda Esperança', areaHa: 10000 })
     .expect(201);
 
   const talhao = await request(app.getHttpServer())
     .post(`/propriedades/${propriedade.body.id}/talhoes`)
+    .set('Cookie', cookie)
     .send({ nome: 'Talhão 1', areaHa: 2000 })
     .expect(201);
 
   const safra = await request(app.getHttpServer())
     .post('/safras')
+    .set('Cookie', cookie)
     .send({
       nome: 'Colheitas 25/26 Soja',
       cultura: 'Soja',
@@ -27,16 +33,19 @@ export async function criarFixturesAgricolas(app: INestApplication) {
 
   const procedimento = await request(app.getHttpServer())
     .post('/procedimentos')
+    .set('Cookie', cookie)
     .send({ nome: '1ª Aplicação de Fungicida', tipo: 'APLICACAO' })
     .expect(201);
 
   const procedimentoColheita = await request(app.getHttpServer())
     .post('/procedimentos')
+    .set('Cookie', cookie)
     .send({ nome: 'Colheita', tipo: 'COLHEITA' })
     .expect(201);
 
   const insumo = await request(app.getHttpServer())
     .post('/insumos')
+    .set('Cookie', cookie)
     .send({ nome: 'Fox Supra', unidade: 'litro', precoUnitarioAtual: 100 })
     .expect(201);
 

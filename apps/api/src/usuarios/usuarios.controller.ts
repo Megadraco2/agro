@@ -1,11 +1,9 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '../auth/auth.guard';
 import { CreateUsuarioDto } from './usuarios.dto';
 import { UsuariosService } from './usuarios.service';
 
 @ApiTags('usuarios')
-@UseGuards(AuthGuard)
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly service: UsuariosService) {}
