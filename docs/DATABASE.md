@@ -51,3 +51,10 @@ a `SessaoAdminSistema` e `SessaoUsuario`: o SHA-256 do token aleatório que vai 
 existiam antes dela não têm token correspondente — a migration as preenche com um marcador
 (`legado:<id>`) que nunca casa com o hash de nenhum cookie e as marca como revogadas, sem apagar
 linhas.
+
+A trava `ON DELETE RESTRICT` de `20261014090000_restrict_catalogo_para_transacional` (ver docs/BACKLOG.md,
+item 6) era só teórica até aqui — não existia rota DELETE pra acioná-la, só testes diretos via Prisma
+Client. Agora `DELETE /propriedades/:id`, `/talhoes/:id`, `/safras/:id`, `/procedimentos/:id` e
+`/insumos/:id` exercitam a trava de verdade em produção: se a linha de catálogo ainda tem
+Planejamento/Execução/CompraInsumo vinculado, o Postgres rejeita com `P2003` e a API traduz isso em 400
+(`apps/api/src/common/excluir-com-restricao.ts`), em vez de deixar a FK falhar como 500.

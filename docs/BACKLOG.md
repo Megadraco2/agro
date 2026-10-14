@@ -106,8 +106,8 @@ Todo FK de entidade de catálogo (Insumo, Procedimento, Safra, Talhão) para ent
 (PlanejamentoItem/PlanejamentoInsumo, ExecucaoItem/ExecucaoInsumo, CompraInsumo) era `ON DELETE CASCADE` —
 escolha motivada pela conveniência de limpeza de teste, não por decisão de produto. Um `DELETE` de Insumo
 apagaria as linhas de custo de execuções/planejamentos históricos, deixando o `custoTotal` do registro pai
-(que não cascateia, é só um número já gravado) incoerente com seus componentes. Corrigido preventivamente —
-sem rota DELETE ainda hoje, mas fechando a armadilha antes que uma apareça por engano:
+(que não cascateia, é só um número já gravado) incoerente com seus componentes. Corrigido preventivamente,
+fechando a armadilha antes que uma rota DELETE aparecesse por engano:
 
 - Migration `20261014090000_restrict_catalogo_para_transacional` troca as 11 FKs catálogo→transacional de
   `CASCADE` para `RESTRICT`: `PlanejamentoItem→{Safra,Talhao,Procedimento}`, `PlanejamentoInsumo→Insumo`,
@@ -123,10 +123,29 @@ sem rota DELETE ainda hoje, mas fechando a armadilha antes que uma apareça por 
   falhou com `P2003`. Descoberto rodando a suíte, não por suposição. Corrigido tornando
   `apps/api/test/support/limpar-banco.ts` explícito: apaga filhos antes de pais em ordem de dependência, em
   vez de depender da cascata de Organizacao resolver isso por conta própria.
-- 3 testes novos em `apps/api/test/integridade-referencial.test.ts` provam a trava direto via Prisma Client
-  (não existe rota DELETE pra exercitar via HTTP): rejeita apagar um Insumo referenciado por um
-  PlanejamentoInsumo, rejeita apagar uma Safra referenciada por um PlanejamentoItem, e aceita apagar um
-  registro de catálogo sem histórico vinculado.
+- 3 testes em `apps/api/test/integridade-referencial.test.ts` provam a trava direto via Prisma Client,
+  sem depender de rota HTTP: rejeita apagar um Insumo referenciado por um PlanejamentoInsumo, rejeita apagar
+  uma Safra referenciada por um PlanejamentoItem, e aceita apagar um registro de catálogo sem histórico
+  vinculado.
+
+**Atualização (14/10/2026) — a trava deixou de ser só teórica:** agora existe rota `DELETE` em Propriedade,
+Talhão, Safra, Procedimento e Insumo (as 5 entidades de catálogo), implementada via o helper
+`apps/api/src/common/excluir-com-restricao.ts`: o DELETE sempre tenta excluir, e se a trava `RESTRICT` do
+Postgres rejeitar por existir histórico vinculado (`P2003`), o helper traduz isso em 400 em vez de deixar
+vazar como 500; sem vínculo, responde 204. Todo DELETE é restrito à organização do chamador (404 pra
+registro de outra organização) e sem distinção de papel (`ORG_ADMIN`/`ORG_MEMBER`), igual já valia pra
+criar/editar. Planejamento ganhou um `DELETE` próprio, mas por regra de aplicação, não pela trava do banco
+(a FK de Execução para Planejamento é `SetNull`, não `RESTRICT`): rejeita com 400
+("Não é possível excluir um planejamento já executado") se já existir Execução vinculada, senão 204.
+Execução e CompraInsumo continuam sem DELETE (e sem PATCH) — permanecem histórico financeiro imutável, de
+propósito.
+
+Cada uma das 6 entidades (as 5 de catálogo + Planejamento) tem teste de regressão próprio provando as duas
+pontas do comportamento: cria vínculo de histórico → `DELETE` responde 400 e o registro continua listável;
+sem vínculo → `DELETE` responde 204. Ver `apps/api/test/propriedades.test.ts`, `talhoes.test.ts`,
+`safras.test.ts`, `procedimentos.test.ts`, `insumos.test.ts` e `planejamentos.test.ts`. O isolamento entre
+organizações nas rotas DELETE novas também é coberto em `apps/api/test/isolamento-organizacoes.test.ts`
+(excluir registro de outra organização → 404).
 
 ---
 
