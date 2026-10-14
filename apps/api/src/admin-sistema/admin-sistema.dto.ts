@@ -32,3 +32,12 @@ export class CreateOrganizacaoDto {
   @MinLength(8)
   adminSenha!: string;
 }
+
+export class CriarPrimeiroUsuarioDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(8)
+  senha!: string;
+}

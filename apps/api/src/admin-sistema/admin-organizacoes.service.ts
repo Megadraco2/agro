@@ -1,9 +1,19 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import type { OrganizacaoAdminResponse } from '@agro/contracts';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import type {
+  OrganizacaoAdminResponse,
+  UsuarioResponse,
+} from '@agro/contracts';
 import { Prisma } from '../generated/prisma/client';
 import { hashSenha } from '../common/senha';
 import { PrismaService } from '../prisma/prisma.service';
-import type { CreateOrganizacaoDto } from './admin-sistema.dto';
+import type {
+  CreateOrganizacaoDto,
+  CriarPrimeiroUsuarioDto,
+} from './admin-sistema.dto';
 
 @Injectable()
 export class AdminOrganizacoesService {
@@ -61,6 +71,53 @@ export class AdminOrganizacoesService {
         throw new BadRequestException(
           'Já existe um usuário com este email de administrador',
         );
+      }
+      throw error;
+    }
+  }
+
+  async criarPrimeiroUsuario(
+    organizacaoId: string,
+    dto: CriarPrimeiroUsuarioDto,
+  ): Promise<UsuarioResponse> {
+    const organizacao = await this.prisma.organizacao.findUnique({
+      where: { id: organizacaoId },
+    });
+    if (!organizacao) {
+      throw new NotFoundException('Organização não encontrada');
+    }
+
+    const totalUsuarios = await this.prisma.usuario.count({
+      where: { organizacaoId },
+    });
+    if (totalUsuarios > 0) {
+      throw new BadRequestException(
+        'Esta organização já tem usuários — login como ORG_ADMIN dela e use POST /usuarios',
+      );
+    }
+
+    const senhaHash = await hashSenha(dto.senha);
+    try {
+      const usuario = await this.prisma.usuario.create({
+        data: {
+          organizacaoId,
+          email: dto.email,
+          senhaHash,
+          papel: 'ORG_ADMIN',
+        },
+      });
+      return {
+        id: usuario.id,
+        email: usuario.email,
+        papel: usuario.papel,
+        createdAt: usuario.createdAt.toISOString(),
+      };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new BadRequestException('Já existe um usuário com este email');
       }
       throw error;
     }

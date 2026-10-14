@@ -9,6 +9,9 @@ import { PrismaService } from '../src/prisma/prisma.service';
 describe('Admin de sistema', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  // Compartilhado entre os testes de "primeiro usuário de organização existente"
+  // para não esgotar o rate limit de login (5 tentativas/60s) com logins repetidos.
+  let cookieParaPrimeiroUsuario: string;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -132,5 +135,92 @@ describe('Admin de sistema', () => {
       where: { email: 'chefe@fazenda-teste.com' },
     });
     await prisma.organizacao.delete({ where: { id: criada.body.id } });
+  });
+
+  it('creates the first user of an organization that has no users yet', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/admin/auth/login')
+      .send({
+        email: process.env.ADMIN_BOOTSTRAP_EMAIL,
+        senha: process.env.ADMIN_BOOTSTRAP_PASSWORD,
+      })
+      .expect(200);
+    cookieParaPrimeiroUsuario = login.headers['set-cookie']![0] as string;
+
+    const organizacaoSemUsuarios = await prisma.organizacao.create({
+      data: {
+        slug: `org-sem-usuarios-${Date.now()}`,
+        nome: 'Organização Sem Usuários',
+        maxUsuarios: 5,
+      },
+    });
+
+    const resposta = await request(app.getHttpServer())
+      .post(`/admin/organizacoes/${organizacaoSemUsuarios.id}/usuarios`)
+      .set('Cookie', cookieParaPrimeiroUsuario)
+      .send({
+        email: 'primeiro-admin@org-sem-usuarios.com',
+        senha: 'senha-do-primeiro-123',
+      })
+      .expect(201);
+    expect(resposta.body.papel).toBe('ORG_ADMIN');
+
+    await prisma.usuario.deleteMany({
+      where: { email: 'primeiro-admin@org-sem-usuarios.com' },
+    });
+    await prisma.organizacao.delete({
+      where: { id: organizacaoSemUsuarios.id },
+    });
+  });
+
+  it('rejects giving a first user to an organization that already has users', async () => {
+    const cookie = cookieParaPrimeiroUsuario;
+
+    const criada = await request(app.getHttpServer())
+      .post('/admin/organizacoes')
+      .set('Cookie', cookie)
+      .send({
+        nome: 'Fazenda Com Usuário',
+        maxUsuarios: 3,
+        adminEmail: 'chefe@fazenda-com-usuario.com',
+        adminSenha: 'senha-do-chefe-123',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/admin/organizacoes/${criada.body.id}/usuarios`)
+      .set('Cookie', cookie)
+      .send({
+        email: 'outro-admin@fazenda-com-usuario.com',
+        senha: 'senha-do-outro-123',
+      })
+      .expect(400);
+
+    await prisma.usuario.deleteMany({
+      where: { email: 'chefe@fazenda-com-usuario.com' },
+    });
+    await prisma.organizacao.delete({ where: { id: criada.body.id } });
+  });
+
+  it('rejects giving a first user to an organization without a valid admin session', async () => {
+    const organizacaoSemUsuarios = await prisma.organizacao.create({
+      data: {
+        slug: `org-sem-sessao-${Date.now()}`,
+        nome: 'Organização Sem Sessão',
+        maxUsuarios: 5,
+      },
+    });
+
+    await request(app.getHttpServer())
+      .post(`/admin/organizacoes/${organizacaoSemUsuarios.id}/usuarios`)
+      .send({
+        email: 'sem-sessao@org-sem-sessao.com',
+        senha: 'senha-sem-sessao-123',
+      })
+      .expect(401);
+
+    await prisma.organizacao.delete({
+      where: { id: organizacaoSemUsuarios.id },
+    });
   });
 });
