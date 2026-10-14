@@ -105,6 +105,35 @@ describe('Planejamentos', () => {
       .expect(400);
   });
 
+  it('keeps custoEstimado and precoUnitarioSnapshot unchanged after the insumo price changes', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app);
+
+    const response = await request(app.getHttpServer())
+      .post('/planejamentos')
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        dataPrevista: new Date().toISOString(),
+        insumos: [{ insumoId: insumo.id, dosePorHa: 0.35 }],
+      })
+      .expect(201);
+    expect(response.body.custoEstimado).toBe('70000.00');
+    expect(response.body.insumos[0].precoUnitarioSnapshot).toBe('100.0000');
+
+    await request(app.getHttpServer())
+      .patch(`/insumos/${insumo.id}`)
+      .send({ precoUnitarioAtual: 999 })
+      .expect(200);
+
+    const got = await request(app.getHttpServer())
+      .get(`/planejamentos/${response.body.id}`)
+      .expect(200);
+    expect(got.body.custoEstimado).toBe('70000.00');
+    expect(got.body.insumos[0].precoUnitarioSnapshot).toBe('100.0000');
+  });
+
   it('filters planejamentos by safraId and talhaoId', async () => {
     const { talhao, safra, procedimento, insumo } =
       await criarFixturesAgricolas(app);

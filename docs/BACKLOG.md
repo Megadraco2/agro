@@ -29,15 +29,26 @@ sobrescreve env vars já setadas pelo processo (verificado simulando exatamente 
 
 ## 3. Testes que o spec pedia e nunca foram escritos
 
-**Status:** ⏳ Pendente
+**Status:** 🟡 Parcialmente resolvido (14/10/2026) — 2 de 3
 
-A spec original (docs/superpowers/specs/2026-10-13-gestao-agricola-dominio-design.md, seção "Testes") lista
-três casos nunca implementados:
+A spec original (docs/superpowers/specs/2026-10-13-gestao-agricola-dominio-design.md, seção "Testes") listava
+três casos. Dois foram implementados:
 
-- Execução não pode referenciar Talhão de Propriedade de outra Organização.
-- Mudar o preço de um Insumo não altera `custoEstimado`/snapshots já gravados.
-- Cada contrato Zod (`@agro/contracts`) aceita payload válido e rejeita payload inválido/campo extra — hoje
-  só o TypeScript garante que `toResponse()` bate com o tipo, não há teste de runtime rodando `.parse()`.
+- ✅ Mudar o preço de um Insumo não altera `custoEstimado`/`custoTotal`/snapshots já gravados — teste de
+  regressão adicionado em `planejamentos.test.ts`, `execucoes.test.ts` e `compras-insumo.test.ts` (cria,
+  muda o preço via PATCH, reconsulta, confirma que nada mudou).
+- ✅ Cada contrato Zod (`@agro/contracts`) aceita payload válido e rejeita payload inválido/campo extra —
+  25 testes novos em `packages/contracts/schemas.test.ts`, um bloco por recurso.
+
+O terceiro **não é testável ainda**, e por isso continua fora:
+
+- ⛔ Execução não pode referenciar Talhão de Propriedade de outra Organização — hoje **nenhuma** das 8
+  entidades filtra busca por `organizacaoId` (achado sistêmico repetido em quase toda revisão de task:
+  Propriedade, Talhão, Safra, Procedimento, Insumo, Planejamento, Execução, CompraInsumo todas buscam só por
+  `id`). Com uma única organização no sistema inteiro, não existe uma segunda organização de onde vazar
+  dado — escrever esse teste hoje só provaria que a funcionalidade não existe. Isso é trabalho de
+  autorização (helper de busca escopada por organização), explicitamente depende do design de autenticação
+  (docs/AUTH.md), não é um teste isolado que falta escrever.
 
 ## 4. Sem limite máximo em campos numéricos
 

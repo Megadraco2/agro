@@ -162,4 +162,37 @@ describe('Execuções', () => {
       .expect(201);
     expect(execucao.body.planejamentoItemId).toBeNull();
   });
+
+  it('keeps custoTotal and precoUnitarioSnapshot unchanged after the insumo price changes', async () => {
+    const { talhao, safra, procedimento, insumo } =
+      await criarFixturesAgricolas(app);
+
+    const execucao = await request(app.getHttpServer())
+      .post('/execucoes')
+      .send({
+        safraId: safra.id,
+        talhaoId: talhao.id,
+        procedimentoId: procedimento.id,
+        data: new Date().toISOString(),
+        insumos: [{ insumoId: insumo.id, quantidade: 700 }],
+      })
+      .expect(201);
+    expect(execucao.body.custoTotal).toBe('70000.00');
+    expect(execucao.body.insumos[0].precoUnitarioSnapshot).toBe('100.0000');
+
+    await request(app.getHttpServer())
+      .patch(`/insumos/${insumo.id}`)
+      .send({ precoUnitarioAtual: 999 })
+      .expect(200);
+
+    // Execução não tem GET por id — confirma via a listagem filtrada.
+    const list = await request(app.getHttpServer())
+      .get(`/execucoes?safraId=${safra.id}&talhaoId=${talhao.id}`)
+      .expect(200);
+    const encontrada = list.body.find(
+      (item: { id: string }) => item.id === execucao.body.id,
+    );
+    expect(encontrada.custoTotal).toBe('70000.00');
+    expect(encontrada.insumos[0].precoUnitarioSnapshot).toBe('100.0000');
+  });
 });

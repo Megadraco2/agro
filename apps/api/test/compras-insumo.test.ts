@@ -54,6 +54,37 @@ describe('Compras de Insumo', () => {
     expect(list.body).toHaveLength(1);
   });
 
+  it('keeps custoTotal and precoUnitarioSnapshot unchanged after the insumo price changes', async () => {
+    const { talhao, safra, insumo } = await criarFixturesAgricolas(app);
+
+    const compra = await request(app.getHttpServer())
+      .post('/compras-insumo')
+      .send({
+        talhaoId: talhao.id,
+        safraId: safra.id,
+        insumoId: insumo.id,
+        data: new Date().toISOString(),
+        quantidade: 91,
+      })
+      .expect(201);
+    expect(compra.body.custoTotal).toBe('9100.00');
+    expect(compra.body.precoUnitarioSnapshot).toBe('100.0000');
+
+    await request(app.getHttpServer())
+      .patch(`/insumos/${insumo.id}`)
+      .send({ precoUnitarioAtual: 999 })
+      .expect(200);
+
+    const list = await request(app.getHttpServer())
+      .get(`/compras-insumo?talhaoId=${talhao.id}`)
+      .expect(200);
+    const encontrada = list.body.find(
+      (item: { id: string }) => item.id === compra.body.id,
+    );
+    expect(encontrada.custoTotal).toBe('9100.00');
+    expect(encontrada.precoUnitarioSnapshot).toBe('100.0000');
+  });
+
   it('rejects compra referencing an unknown insumo', async () => {
     const { talhao, safra } = await criarFixturesAgricolas(app);
     await request(app.getHttpServer())
