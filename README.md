@@ -1,6 +1,8 @@
 # Agro
 
-Fundação de SaaS agrícola: Next.js/PWA e NestJS REST em monorepo pnpm/Turborepo. Sem funcionalidades de negócio.
+SaaS agrícola: Next.js/PWA e NestJS REST em monorepo pnpm/Turborepo.
+Domínio de Gestão Agrícola implementado: Propriedade, Talhão, Safra, Procedimento, Insumo, Planejamento, Execução e Compra de Insumo — ver [domínio](docs/DOMAIN.md) e [API](docs/API.md).
+Autenticação ainda não implementada; organização única e implícita por enquanto (ver [autenticação](docs/AUTH.md)).
 
 ## Requisitos e início
 
@@ -15,6 +17,7 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 docker compose up -d postgres
 pnpm db:validate
 pnpm db:generate
+pnpm --filter @agro/api db:migrate
 pnpm dev
 ```
 
@@ -35,6 +38,12 @@ pnpm build
 `pnpm format` aplica Prettier. Hooks Husky executam lint-staged e commitlint.
 Após criar/clonar o repositório Git, execute `pnpm prepare` para ativar os hooks.
 Não é necessário Git para compilar ou testar.
+
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) roda lint, typecheck, test e build em todo push e Pull Request contra `dev` e `main`.
+Os testes da API usam um Postgres de serviço do próprio runner; as migrations são aplicadas com `prisma migrate deploy` (variante não interativa de CI, sem shadow database) antes da suíte rodar.
+Um segundo job builda a imagem Docker da API (`apps/api/Dockerfile`) apenas se a validação anterior passar.
 
 ## Produção e PWA local
 
