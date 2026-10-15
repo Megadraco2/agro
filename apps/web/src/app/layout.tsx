@@ -1,6 +1,15 @@
 import type { Metadata, Viewport } from 'next';
+import { Archivo, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { PwaRegister } from '@/components/pwa-register';
+
+const archivo = Archivo({ subsets: ['latin'], variable: '--font-archivo' });
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-plex-mono',
+});
+
 export const metadata: Metadata = {
   title: 'Agro',
   description: 'Fundação da plataforma de gestão agrícola',
@@ -16,7 +25,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={`${archivo.variable} ${plexMono.variable}`}>
       <body>
         {children}
         <PwaRegister />
