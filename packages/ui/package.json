@@ -4,12 +4,14 @@
   "version": "0.0.0",
   "exports": {
     "./button": "./src/button.tsx",
+    "./modal": "./src/modal.tsx",
     "./utils": "./src/utils.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "1.3.1",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -19,7 +21,7 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@agro/typescript-config": "workspace:*"
+    "@agro/typescript-config": "workspace:*",
+    "@types/react": "^19.0.0"
   }
 }
