@@ -151,7 +151,7 @@ export default function PropriedadesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>Área (ha)</TableHead>
+              <TableHead numeric>Área (ha)</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -205,14 +205,16 @@ export default function PropriedadesPage() {
           <Input
             label="Nome"
             required
+            maxLength={120}
             value={nome}
             onChange={(e) => setNome(e.target.value)}
           />
           <Input
             label="Área (ha)"
             type="number"
-            min={0}
+            min="0.01"
             step="0.01"
+            max={1000000}
             required
             value={areaHa}
             onChange={(e) => setAreaHa(e.target.value)}

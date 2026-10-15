@@ -5,6 +5,7 @@ const AREAS_ATIVAS = [
   { href: '/propriedades', label: 'Propriedades' },
   { href: '/procedimentos', label: 'Procedimentos' },
   { href: '/insumos', label: 'Insumos' },
+  { href: '/usuarios', label: 'Usuários' },
 ];
 
 const AREAS_FUTURAS = [

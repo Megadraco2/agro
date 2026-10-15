@@ -162,7 +162,7 @@ export default function InsumosPage() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Unidade</TableHead>
-              <TableHead>Preço unitário</TableHead>
+              <TableHead numeric>Preço unitário</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -215,20 +215,23 @@ export default function InsumosPage() {
           <Input
             label="Nome"
             required
+            maxLength={120}
             value={nome}
             onChange={(e) => setNome(e.target.value)}
           />
           <Input
             label="Unidade"
             required
+            maxLength={40}
             value={unidade}
             onChange={(e) => setUnidade(e.target.value)}
           />
           <Input
             label="Preço unitário"
             type="number"
-            min={0}
+            min="0.0001"
             step="0.0001"
+            max={1000000}
             required
             value={precoUnitarioAtual}
             onChange={(e) => setPrecoUnitarioAtual(e.target.value)}
@@ -247,14 +250,19 @@ export default function InsumosPage() {
       <Modal
         open={modal?.tipo === 'editar'}
         onOpenChange={(open) => !open && fecharModal()}
-        title="Editar preço"
+        title={
+          modal?.tipo === 'editar'
+            ? `Editar preço — ${modal.insumo.nome}`
+            : 'Editar preço'
+        }
       >
         <form onSubmit={aoEditarPreco} className="space-y-4">
           <Input
             label="Preço unitário"
             type="number"
-            min={0}
+            min="0.0001"
             step="0.0001"
+            max={1000000}
             required
             value={precoUnitarioAtual}
             onChange={(e) => setPrecoUnitarioAtual(e.target.value)}

@@ -35,11 +35,16 @@ export function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
   );
 }
 
-export function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
+export function TableHead({
+  className,
+  numeric = false,
+  ...props
+}: React.ComponentProps<'th'> & { numeric?: boolean }) {
   return (
     <th
       className={cn(
         'px-4 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase',
+        numeric && 'text-right',
         className,
       )}
       {...props}

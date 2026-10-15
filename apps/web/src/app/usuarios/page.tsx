@@ -55,6 +55,12 @@ export default function UsuariosPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-10 px-6 py-12">
       <h1 className="text-2xl font-semibold">Usuários</h1>
+      <a
+        href="/propriedades"
+        className="text-sm text-muted-foreground underline"
+      >
+        Ir para Propriedades
+      </a>
 
       <section className="rounded-xl border border-border bg-white p-6">
         <h2 className="mb-4 text-lg font-semibold">Usuários da organização</h2>

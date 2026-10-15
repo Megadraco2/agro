@@ -218,6 +218,7 @@ export default function ProcedimentosPage() {
           <Input
             label="Nome"
             required
+            maxLength={160}
             value={nome}
             onChange={(e) => setNome(e.target.value)}
           />
